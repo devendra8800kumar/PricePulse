@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import ProductQuickViewModal from '../components/ProductQuickViewModal';
 import SearchModal from '../components/SearchModal';
 import ToastContainer from '../components/ToastContainer';
+import TrackProductModal from '../components/TrackProductModal';
 import { useApp } from '../context/AppContext';
 
 export default function RootLayout() {
@@ -37,6 +38,9 @@ export default function RootLayout() {
 
       {/* 4. Quick View Flip-Open Preview Modal */}
       <ProductQuickViewModal />
+
+      {/* 4.5 Prospective Track Product Modal */}
+      <TrackProductModal />
 
       {/* 5. Global Search Dialog (Cmd+K / Search button) */}
       <SearchModal

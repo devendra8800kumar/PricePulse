@@ -10,8 +10,7 @@ import {
   ArrowRight, 
   CheckCircle2, 
   Sparkles,
-  ShieldCheck,
-  Check
+  ShieldCheck
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Button from '../components/ui/Button';
@@ -30,7 +29,7 @@ export default function SignupPage() {
   const { signup } = useApp();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -53,7 +52,7 @@ export default function SignupPage() {
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError('Password must be at least 8 characters long as required for security.');
       return;
     }
     if (password !== confirmPassword) {
@@ -67,12 +66,14 @@ export default function SignupPage() {
 
     setIsLoading(true);
 
-    // Simulate account creation
-    setTimeout(() => {
-      setIsLoading(false);
-      signup(name, email, password);
+    try {
+      await signup(name, email, password);
       navigate('/dashboard', { replace: true });
-    }, 700);
+    } catch (err) {
+      setError(err.message || 'Registration failed. An account with this email may already exist.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -140,7 +141,7 @@ export default function SignupPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 mb-4 animate-in fade-in">
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 mb-4 animate-in fade-in">
                 {error}
               </div>
             )}
@@ -158,6 +159,7 @@ export default function SignupPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Alex Hunter"
+                    required
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -175,6 +177,8 @@ export default function SignupPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
+                    autoComplete="email"
+                    required
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -192,6 +196,8 @@ export default function SignupPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Create a strong password..."
+                    required
+                    minLength={8}
                     className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                   />
                   <button
@@ -217,6 +223,8 @@ export default function SignupPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter password..."
+                    required
+                    minLength={8}
                     className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                   />
                   <button

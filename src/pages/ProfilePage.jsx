@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   User, 
@@ -9,65 +9,95 @@ import {
   Save, 
   LogOut, 
   CheckCircle2, 
-  AlertCircle, 
   Globe, 
-  Database, 
-  Server, 
-  Eye, 
-  EyeOff,
-  ShoppingBag,
-  ExternalLink
+  Trash2,
+  Activity,
+  Layers,
+  Sparkles,
+  TrendingUp,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import Button from '../components/ui/Button';
 
 export default function ProfilePage() {
-  const { user, currency, toggleCurrency, logout, showToast } = useApp();
+  const { 
+    user, 
+    userStats, 
+    currency, 
+    toggleCurrency, 
+    formatPrice,
+    logout, 
+    updateUserProfile, 
+    deleteAccount,
+    showToast,
+    refreshUserStats
+  } = useApp();
+
   const navigate = useNavigate();
 
-  // Form states
-  const [name, setName] = useState(user?.name || 'Pulse Shopper');
-  const [email, setEmail] = useState(user?.email || 'shopper@pricepulse.in');
-  const [phone, setPhone] = useState('+91 98765 43210');
-  const [preferredStore, setPreferredStore] = useState('both');
-  const [dropThreshold, setDropThreshold] = useState('5');
+  // Form states initialized from user profile
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [locale, setLocale] = useState(user?.locale || 'en-US');
 
-  // Notification preferences
-  const [notifyEmail, setNotifyEmail] = useState(true);
-  const [notifyBrowser, setNotifyBrowser] = useState(true);
-  const [notifyWeeklyDigest, setNotifyWeeklyDigest] = useState(false);
+  // Notification preferences mapped to backend schema: { email, push, webhook }
+  const [notifyEmail, setNotifyEmail] = useState(user?.notification_prefs?.email ?? true);
+  const [notifyPush, setNotifyPush] = useState(user?.notification_prefs?.push ?? false);
+  const [notifyWebhook, setNotifyWebhook] = useState(user?.notification_prefs?.webhook ?? false);
 
-  // Password fields
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSaveProfile = (e) => {
+  // Sync state if user updates
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setLocale(user.locale || 'en-US');
+      setNotifyEmail(user.notification_prefs?.email ?? true);
+      setNotifyPush(user.notification_prefs?.push ?? false);
+      setNotifyWebhook(user.notification_prefs?.webhook ?? false);
+    }
+    refreshUserStats();
+  }, [user, refreshUserStats]);
+
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    showToast('Profile and notification preferences updated!', 'success');
+    setIsSaving(true);
+    try {
+      await updateUserProfile({
+        email: email.trim(),
+        locale: locale,
+        notification_prefs: {
+          email: notifyEmail,
+          push: notifyPush,
+          webhook: notifyWebhook,
+        },
+      });
+    } catch (err) {
+      showToast(err.message || 'Failed to update profile.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleUpdatePassword = (e) => {
-    e.preventDefault();
-    if (!newPassword || newPassword.length < 8) {
-      showToast('New password must be at least 8 characters', 'warning');
-      return;
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      navigate('/login');
+    } catch (err) {
+      showToast(err.message || 'Could not delete account.', 'error');
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
-    if (newPassword !== confirmPassword) {
-      showToast('Passwords do not match', 'warning');
-      return;
-    }
-    setPasswordSuccess(true);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    showToast('Password updated successfully (local simulated)', 'success');
-    setTimeout(() => setPasswordSuccess(false), 4000);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -81,32 +111,82 @@ export default function ProfilePage() {
             Account Profile & Settings
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage your personal electronics price tracking preferences and security.
+            Manage your personal price monitoring preferences and FastAPI account credentials.
           </p>
         </div>
 
         <button
           onClick={handleLogout}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition-colors self-start sm:self-center"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition-colors self-start sm:self-center cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           Sign Out Safely
         </button>
       </div>
 
+      {/* Live User Stats Strip from /api/v1/users/me/stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+            <Layers className="w-4 h-4 text-blue-600" />
+            <span>Tracked Products</span>
+          </div>
+          <div className="text-2xl font-black text-slate-900">
+            {userStats?.tracked_count ?? 0}
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+            <Activity className="w-4 h-4 text-emerald-600" />
+            <span>Active Subscriptions</span>
+          </div>
+          <div className="text-2xl font-black text-emerald-600">
+            {userStats?.active_subscriptions ?? 0}
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+            <Bell className="w-4 h-4 text-amber-500" />
+            <span>Alerts Fired</span>
+          </div>
+          <div className="text-2xl font-black text-amber-600">
+            {userStats?.alerts_fired ?? 0}
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+            <TrendingUp className="w-4 h-4 text-cyan-600" />
+            <span>Savings Estimate</span>
+          </div>
+          <div className="text-2xl font-black text-slate-900">
+            {formatPrice(userStats?.savings_estimate ?? 0)}
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-8">
-        {/* 2. Personal Information Card */}
+        {/* 2. Personal Information Card (GET & PATCH /api/v1/users/me) */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
           <div className="flex items-center gap-4 pb-6 border-b border-slate-100 mb-6">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-extrabold text-2xl flex items-center justify-center shadow-md shadow-blue-500/20">
               {name ? name[0].toUpperCase() : 'P'}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">{name}</h2>
+              <h2 className="text-lg font-bold text-slate-900">{name || 'PricePulse User'}</h2>
               <p className="text-xs text-slate-500">{email}</p>
-              <div className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200/60">
-                <Shield className="w-3 h-3 text-emerald-600" />
-                Active Pro Subscriber
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200/60">
+                  <Shield className="w-3 h-3 text-emerald-600" />
+                  {user?.isActive ? 'Active Verified Account' : 'Inactive'}
+                </span>
+                {user?.id && (
+                  <span className="text-[11px] font-mono text-slate-400">
+                    UID: {user.id.slice(0, 8)}...
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -115,55 +195,55 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Full Name
+                  Display Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Email Address
+                  Account Email Address
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Phone Number
+                  User Locale
                 </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-                />
+                <select
+                  value={locale}
+                  onChange={(e) => setLocale(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                >
+                  <option value="en-US">en-US (United States)</option>
+                  <option value="en-IN">en-IN (India / English)</option>
+                  <option value="en-GB">en-GB (United Kingdom)</option>
+                </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Preferred Store Priority
+                  Account Created
                 </label>
-                <select
-                  value={preferredStore}
-                  onChange={(e) => setPreferredStore(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-                >
-                  <option value="both">Both (Show Absolute Lowest Price)</option>
-                  <option value="amazon">Amazon Prime Priority</option>
-                  <option value="flipkart">Flipkart Plus Priority</option>
-                </select>
+                <input
+                  type="text"
+                  disabled
+                  value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Active Member'}
+                  className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium text-slate-500 cursor-not-allowed"
+                />
               </div>
             </div>
 
@@ -176,203 +256,131 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={toggleCurrency}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-2 self-start"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-2 self-start cursor-pointer"
               >
                 <Globe className="w-3.5 h-3.5 text-blue-600" />
                 Switch to {currency === 'INR' ? 'USD ($)' : 'INR (₹)'}
               </button>
             </div>
 
-            <div className="pt-2">
-              <button
+            {/* 3. Notification & Alert Preferences (PATCH /api/v1/users/me) */}
+            <div className="pt-6 border-t border-slate-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Bell className="w-5 h-5 text-amber-500" />
+                <h3 className="text-base font-bold text-slate-900">Notification Channels</h3>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">
+                Configured via your PricePulse backend notification settings.
+              </p>
+
+              <div className="space-y-3">
+                <label className="flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200/80 hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={notifyEmail}
+                    onChange={(e) => setNotifyEmail(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-slate-900 block text-sm">Email Alerts (email: true)</span>
+                    <span className="text-slate-500">Receive dispatch emails when items hit your target price.</span>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200/80 hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={notifyPush}
+                    onChange={(e) => setNotifyPush(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-slate-900 block text-sm">Push Notifications (push: true)</span>
+                    <span className="text-slate-500">Real-time mobile & browser notifications.</span>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200/80 hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={notifyWebhook}
+                    onChange={(e) => setNotifyWebhook(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-slate-900 block text-sm">Webhook Integration (webhook: true)</span>
+                    <span className="text-slate-500">Deliver drop payload events to custom API listeners.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-between items-center">
+              <Button
                 type="submit"
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-600/20 transition-all inline-flex items-center gap-2"
+                variant="primary"
+                size="md"
+                isLoading={isSaving}
+                className="shadow-sm font-semibold"
+                leftIcon={<Save className="w-4 h-4" />}
               >
-                <Save className="w-4 h-4" />
                 Save Profile Changes
-              </button>
-            </div>
-          </form>
-        </div>
+              </Button>
 
-        {/* 3. Notification & Alert Preferences */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Bell className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-bold text-slate-900">Price Drop Alert Triggers</h2>
-          </div>
-          <p className="text-xs text-slate-500 mb-6">
-            Configure how and when PricePulse alerts you about electronics bargains.
-          </p>
-
-          <div className="space-y-4">
-            <label className="flex items-start gap-3.5 p-4 rounded-xl border border-slate-200/80 hover:bg-slate-50/50 cursor-pointer transition-colors">
-              <input
-                type="checkbox"
-                checked={notifyEmail}
-                onChange={(e) => setNotifyEmail(e.target.checked)}
-                className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-              />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block text-sm">Instant Email Notifications</span>
-                <span className="text-slate-500">Send an instant alert as soon as a target price is reached on Amazon or Flipkart.</span>
-              </div>
-            </label>
-
-            <label className="flex items-start gap-3.5 p-4 rounded-xl border border-slate-200/80 hover:bg-slate-50/50 cursor-pointer transition-colors">
-              <input
-                type="checkbox"
-                checked={notifyBrowser}
-                onChange={(e) => setNotifyBrowser(e.target.checked)}
-                className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-              />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block text-sm">Browser Push & In-App Toast Banners</span>
-                <span className="text-slate-500">Display real-time flash banners while exploring PricePulse.</span>
-              </div>
-            </label>
-
-            <label className="flex items-start gap-3.5 p-4 rounded-xl border border-slate-200/80 hover:bg-slate-50/50 cursor-pointer transition-colors">
-              <input
-                type="checkbox"
-                checked={notifyWeeklyDigest}
-                onChange={(e) => setNotifyWeeklyDigest(e.target.checked)}
-                className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-              />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block text-sm">Weekly Electronics Market Digest</span>
-                <span className="text-slate-500">Curated roundup of the biggest price drops across Laptops, Smartphones, and Audio.</span>
-              </div>
-            </label>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700">Minimum Drop Threshold:</span>
-            <div className="flex items-center gap-2">
-              {['3', '5', '10', '15'].map((pct) => (
-                <button
-                  key={pct}
-                  type="button"
-                  onClick={() => setDropThreshold(pct)}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
-                    dropThreshold === pct
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  {pct}% drop
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Password & Security */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Key className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-bold text-slate-900">Password & Security</h2>
-          </div>
-          <p className="text-xs text-slate-500 mb-6">
-            Ensure your account is protected with a secure password.
-          </p>
-
-          {passwordSuccess && (
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl mb-5 flex items-center gap-3 text-emerald-800 text-xs font-medium">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              Password updated successfully. Remember to use this password when logging in again.
-            </div>
-          )}
-
-          <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-lg">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                Current Password
-              </label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  New Password
-                </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Min. 8 chars"
-                  className="w-full px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Confirm Password
-                </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat new password"
-                  className="w-full px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-medium"
+                onClick={() => setShowDeleteModal(true)}
+                className="text-xs text-rose-600 hover:text-rose-700 font-bold inline-flex items-center gap-1.5 cursor-pointer"
               >
-                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                {showPassword ? 'Hide Passwords' : 'Show Passwords'}
-              </button>
-
-              <button
-                type="submit"
-                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors"
-              >
-                Change Password
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Account
               </button>
             </div>
           </form>
         </div>
 
-        {/* 5. Production Backend Configuration Note (Honest Architecture Transparency) */}
-        <div className="bg-gradient-to-br from-slate-900 to-blue-950 text-white rounded-2xl p-6 sm:p-7 border border-slate-800 shadow-md">
-          <div className="flex items-start gap-3.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-cyan-400 flex items-center justify-center flex-shrink-0 border border-blue-500/30">
-              <Server className="w-5 h-5" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
-                Production Backend Architecture Notice
-                <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded border border-cyan-500/30">
-                  Ready for Integration
-                </span>
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                PricePulse is engineered with clean service and context boundaries. This frontend runs a robust local session layer with strict client-side validation and never exposes passwords in localStorage.
+        {/* Delete Confirmation Modal (DELETE /api/v1/users/me) */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-rose-600 font-bold">
+                  <AlertTriangle className="w-5 h-5 text-rose-600" />
+                  <span>Delete Account Permanently</span>
+                </div>
+                <button 
+                  onClick={() => setShowDeleteModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-600 mb-6 leading-relaxed">
+                This action is irreversible. It will delete your PricePulse user account, remove all active price drop subscriptions, and revoke your authentication token.
               </p>
-              <div className="pt-2 text-xs text-slate-400 space-y-1">
-                <p>• <strong>Auth Provider:</strong> Ready to plug into Supabase Auth, Firebase Auth, or OAuth 2.0 (Google / Apple).</p>
-                <p>• <strong>Scraper Worker:</strong> Python / Node.js Puppeteer or Amazon Product Advertising API (PA-API 5.0) + Flipkart Affiliate API.</p>
-                <p>• <strong>Notification Gateway:</strong> AWS SES / Resend for emails and Twilio / Firebase Cloud Messaging for instant push notifications.</p>
+
+              <div className="flex gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <Button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  isLoading={isDeleting}
+                  className="flex-1 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer"
+                >
+                  Confirm Delete
+                </Button>
               </div>
             </div>
           </div>
-        </div>
+        )}
+
       </div>
     </div>
   );

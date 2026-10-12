@@ -10,7 +10,8 @@ import {
   LogOut, 
   LayoutDashboard, 
   LogIn,
-  ChevronRight
+  ChevronRight,
+  PlusCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Button from './ui/Button';
@@ -25,7 +26,10 @@ export default function Navbar() {
     watchlist, 
     user, 
     logout, 
-    openSearch 
+    openSearch,
+    openTrackModal,
+    unreadAlertsCount,
+    systemHealth
   } = useApp();
 
   const navigate = useNavigate();
@@ -109,6 +113,11 @@ export default function Navbar() {
                 }
               >
                 <span>{item.name}</span>
+                {item.path === '/price-alerts' && unreadAlertsCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-extrabold leading-none animate-pulse">
+                    {unreadAlertsCount}
+                  </span>
+                )}
                 {item.dot && (
                   <span 
                     title={item.dotTitle}
@@ -172,46 +181,68 @@ export default function Navbar() {
 
             {/* User Session / Auth Controls */}
             {user && user.isLoggedIn ? (
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="h-9 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center gap-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
-                  aria-label="User account menu"
+                  onClick={openTrackModal}
+                  className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-colors cursor-pointer"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
-                    {user.name.charAt(0)}
-                  </div>
-                  <span className="text-xs font-semibold text-slate-800 hidden sm:inline max-w-24 truncate">
-                    {user.name.split(' ')[0]}
-                  </span>
+                  <PlusCircle className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Track URL</span>
                 </button>
 
-                {/* Dropdown Menu */}
-                {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl py-1.5 z-50 text-xs animate-in fade-in duration-150">
-                    <div className="px-3 py-2 border-b border-slate-100">
-                      <p className="font-bold text-slate-900 truncate">{user.name}</p>
-                      <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="h-9 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center gap-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+                    aria-label="User account menu"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
+                      {user.name.charAt(0)}
                     </div>
+                    <span className="text-xs font-semibold text-slate-800 hidden sm:inline max-w-24 truncate">
+                      {user.name.split(' ')[0]}
+                    </span>
+                  </button>
 
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
-                    >
-                      <LayoutDashboard className="w-3.5 h-3.5" />
-                      <span>User Dashboard</span>
-                    </Link>
+                  {/* Dropdown Menu */}
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl py-1.5 z-50 text-xs animate-in fade-in duration-150">
+                      <div className="px-3 py-2 border-b border-slate-100">
+                        <p className="font-bold text-slate-900 truncate">{user.name}</p>
+                        <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                      </div>
 
-                    <Link
-                      to="/profile"
-                      onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
-                    >
-                      <User className="w-3.5 h-3.5" />
-                      <span>Profile & Settings</span>
-                    </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          openTrackModal();
+                        }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors cursor-pointer text-left"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Track Product URL</span>
+                      </button>
+
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                      >
+                        <LayoutDashboard className="w-3.5 h-3.5" />
+                        <span>User Dashboard</span>
+                      </Link>
+
+                      <Link
+                        to="/profile"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                      >
+                        <User className="w-3.5 h-3.5" />
+                        <span>Profile & Settings</span>
+                      </Link>
 
                     <div className="pt-1 border-t border-slate-100">
                       <button
@@ -230,8 +261,9 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="flex items-center gap-1.5 shrink-0">
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 shrink-0">
                 {/* Log In (Ghost Button, visible on desktop lg+) */}
                 <Button
                   to="/login"

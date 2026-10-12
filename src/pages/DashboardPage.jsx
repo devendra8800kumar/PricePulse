@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   User, 
@@ -8,38 +8,73 @@ import {
   Sparkles, 
   ArrowRight, 
   CheckCircle2, 
-  SlidersHorizontal,
-  Trash2,
-  Percent
+  SlidersHorizontal, 
+  Percent,
+  Clock,
+  PlusCircle,
+  Layers,
+  ExternalLink,
+  ShieldCheck,
+  Cpu
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ALL_PRODUCTS, getProductById } from '../data/electronicsData';
+import { normalizeApiProduct } from '../services/productService';
 import ProductFlipCard from '../components/ProductFlipCard';
+import Button from '../components/ui/Button';
 
 export default function DashboardPage() {
   const { 
     user, 
+    userStats, 
     watchlist, 
-    toggleWatchlist, 
     priceAlerts, 
-    removePriceAlert, 
     recentlyViewed, 
-    currency,
-    formatPrice,
-    logout 
+    currency, 
+    formatPrice, 
+    logout,
+    apiProducts,
+    trackProduct,
+    openTrackModal
   } = useApp();
 
   const navigate = useNavigate();
+
+  // Quick Ingestion URL state inside Dashboard
+  const [quickUrl, setQuickUrl] = useState('');
+  const [quickTarget, setQuickTarget] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [trackError, setTrackError] = useState('');
+
+  const handleQuickTrack = async (e) => {
+    e.preventDefault();
+    setTrackError('');
+    if (!quickUrl.trim()) return;
+
+    if (!quickUrl.includes('amazon') && !quickUrl.includes('flipkart') && !quickUrl.includes('amzn')) {
+      setTrackError('Please provide an Amazon or Flipkart URL.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await trackProduct({
+        url: quickUrl.trim(),
+        target_price: quickTarget ? Number(quickTarget) : null,
+      });
+      setQuickUrl('');
+      setQuickTarget('');
+    } catch (err) {
+      setTrackError(err.message || 'Tracking failed.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Helper for product prices
   const getProductBestPrice = (p) => {
     if (!p) return 0;
     return currency === 'USD' ? p.currentPriceUSD : p.currentPriceINR;
-  };
-
-  const getProductOriginalPrice = (p) => {
-    if (!p) return 0;
-    return currency === 'USD' ? p.originalPriceUSD : p.originalPriceINR;
   };
 
   // Watchlisted products
@@ -63,6 +98,8 @@ export default function DashboardPage() {
     return acc + diff;
   }, 0);
 
+  // Normalized live API products
+  const normalizedApiProducts = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -75,7 +112,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/15 rounded-full text-xs font-medium text-cyan-300">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              Member Intelligence Hub
+              Member Intelligence Hub • FastAPI Active
             </div>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Welcome back, <span className="text-cyan-400">{user?.name || 'Pulse Explorer'}</span>!
@@ -86,6 +123,13 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={openTrackModal}
+              className="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-sm font-bold rounded-xl shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Track New URL
+            </button>
             <Link
               to="/profile"
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl border border-white/20 transition-all flex items-center gap-2"
@@ -93,28 +137,23 @@ export default function DashboardPage() {
               <User className="w-4 h-4 text-cyan-300" />
               Profile Settings
             </Link>
-            <Link
-              to="/products"
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2"
-            >
-              Explore Catalog
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         </div>
       </div>
 
-      {/* 2. Key Metrics Row */}
+      {/* 2. Key Metrics Row from /api/v1/users/me/stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
         {/* Metric 1 */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Saved in Watchlist</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Tracked Products</span>
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Bookmark className="w-5 h-5" />
+              <Layers className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 mb-1">{watchlist.length}</div>
+          <div className="text-3xl font-extrabold text-slate-900 mb-1">
+            {userStats?.tracked_count ?? apiProducts?.length ?? 0}
+          </div>
           <p className="text-xs text-slate-500 flex items-center gap-1.5">
             <span className="text-emerald-600 font-semibold flex items-center">
               <TrendingDown className="w-3.5 h-3.5 mr-0.5" /> Live
@@ -126,57 +165,165 @@ export default function DashboardPage() {
         {/* Metric 2 */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Active Price Alerts</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Active Subscriptions</span>
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
               <Bell className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 mb-1">{priceAlerts.length}</div>
+          <div className="text-3xl font-extrabold text-slate-900 mb-1">
+            {userStats?.active_subscriptions ?? priceAlerts.length}
+          </div>
           <p className="text-xs text-slate-500 flex items-center gap-1.5">
-            <span className="text-amber-600 font-semibold">Instant</span> notification triggers ready
+            <span className="text-amber-600 font-semibold">Instant</span> target drop subscriptions
           </p>
         </div>
 
         {/* Metric 3 */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Potential Savings</span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Percent className="w-5 h-5" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Alerts Fired</span>
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-emerald-600 mb-1">
-            {formatPrice(totalPotentialSavings || 12400)}
+          <div className="text-3xl font-extrabold text-purple-600 mb-1">
+            {userStats?.alerts_fired ?? 0}
           </div>
-          <p className="text-xs text-slate-500">Available across lowest store options</p>
+          <p className="text-xs text-slate-500">Threshold drops detected & dispatched</p>
         </div>
 
         {/* Metric 4 */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Intelligence Status</span>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Sparkles className="w-5 h-5" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Savings Estimate</span>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Percent className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-xl font-bold text-slate-900 mb-1">Active AI Sync</div>
-          <p className="text-xs text-slate-500 flex items-center gap-1 text-emerald-600 font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" /> High-frequency polling
-          </p>
+          <div className="text-3xl font-extrabold text-emerald-600 mb-1">
+            {formatPrice(userStats?.savings_estimate || totalPotentialSavings || 12400)}
+          </div>
+          <p className="text-xs text-slate-500">Available across lowest store options</p>
         </div>
+      </div>
+
+      {/* Prospective Track URL Direct Input Bar */}
+      <div className="mb-10 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <PlusCircle className="w-5 h-5 text-blue-600" />
+          <h2 className="text-base font-extrabold text-slate-900">
+            Prospective Product Ingestion (/api/v1/products/track)
+          </h2>
+        </div>
+        <p className="text-xs text-slate-500 mb-4">
+          Paste any Amazon or Flipkart product URL to trigger a prospective live scrape, de-duplicate canonical keys, and evaluate buy recommendations.
+        </p>
+
+        {trackError && (
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 mb-4">
+            {trackError}
+          </div>
+        )}
+
+        <form onSubmit={handleQuickTrack} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <input
+            type="url"
+            value={quickUrl}
+            onChange={(e) => setQuickUrl(e.target.value)}
+            placeholder="Paste Amazon or Flipkart product link..."
+            required
+            className="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-blue-500"
+          />
+          <input
+            type="number"
+            value={quickTarget}
+            onChange={(e) => setQuickTarget(e.target.value)}
+            placeholder="Target price (optional)"
+            className="w-full sm:w-48 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-blue-500"
+          />
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={isSubmitting}
+            className="text-xs font-bold py-2.5 px-5 shrink-0 cursor-pointer"
+          >
+            Track Product
+          </Button>
+        </form>
       </div>
 
       {/* 3. Main Dashboard Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-        {/* Left 2 Cols: Active Alerts & Watchlist Quick Preview */}
+        {/* Left 2 Cols: Live Ingested Products & Watchlist Preview */}
         <div className="lg:col-span-2 space-y-8">
+          
+          {/* Live Ingested Products from /api/v1/products */}
+          {normalizedApiProducts.length > 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-7">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Cpu className="w-5 h-5 text-blue-600" />
+                    Live System Tracked Products
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                    Products being tracked in your PricePulse backend database.
+                  </p>
+                </div>
+                <Link
+                  to="/products"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                >
+                  View catalog ({normalizedApiProducts.length})
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {normalizedApiProducts.map((p) => (
+                  <div key={p.id} className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:shadow-xs transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="uppercase text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                          {p.platform}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                          {p.recommendation}
+                        </span>
+                      </div>
+                      <Link 
+                        to={`/products/${p.id}`}
+                        className="text-xs font-bold text-slate-900 hover:text-blue-600 line-clamp-2 mb-2 block"
+                      >
+                        {p.name}
+                      </Link>
+                      <div className="text-sm font-black text-blue-600">
+                        {formatPrice(p.currentPriceINR)}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+                      <span>Low: {formatPrice(p.lowestHistoricalPriceINR)}</span>
+                      <Link 
+                        to={`/products/${p.id}`} 
+                        className="font-bold text-blue-600 hover:underline flex items-center gap-1"
+                      >
+                        Stats & Charts →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Active Price Alerts Card */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-7">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <Bell className="w-5 h-5 text-amber-500" />
-                  Active Target Price Alerts
+                  Target Price Drop Alerts
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                   We verify your target price whenever store algorithms update.
@@ -238,117 +385,17 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-3 flex-shrink-0">
                         {isReached ? (
                           <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Goal Reached!
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Reached
                           </span>
                         ) : (
-                          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-                            ₹{Math.abs(diff).toLocaleString('en-IN')} away
+                          <span className="text-xs text-slate-500 font-medium">
+                            {formatPrice(diff)} away
                           </span>
                         )}
-                        <button
-                          onClick={() => removePriceAlert(alert.id)}
-                          className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors"
-                          title="Delete alert"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   );
                 })}
-              </div>
-            )}
-          </div>
-
-          {/* Watchlist Summary Preview */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-7">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Bookmark className="w-5 h-5 text-blue-600" />
-                  Your Watchlist Spotlight
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                  Personal shortlist of tracked electronics.
-                </p>
-              </div>
-              <Link
-                to="/watchlist"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-              >
-                View full watchlist ({watchlist.length})
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {watchlistedProducts.length === 0 ? (
-              <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                <Bookmark className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-700">No products saved yet</p>
-                <p className="text-xs text-slate-500 mt-1 mb-4">Click the bookmark icon on any product card to track it.</p>
-                <Link
-                  to="/products"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5"
-                >
-                  Browse Electronics
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {watchlistedProducts.slice(0, 4).map((product) => (
-                  <div 
-                    key={product.id}
-                    className="p-4 rounded-xl border border-slate-200/90 hover:border-blue-400 bg-white hover:shadow-md transition-all flex flex-col justify-between"
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      <img 
-                        src={product.image} 
-                        alt={product.name} 
-                        className="w-14 h-14 object-contain rounded-lg p-1 bg-slate-50 border border-slate-100 flex-shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                          {product.category}
-                        </span>
-                        <Link 
-                          to={`/products/${product.slug || product.id}`}
-                          className="font-bold text-sm text-slate-900 hover:text-blue-600 truncate block mt-1 transition-colors"
-                        >
-                          {product.name}
-                        </Link>
-                        <div className="text-xs text-slate-500 mt-0.5">
-                          Lowest at <span className="font-semibold text-slate-800 capitalize">{product.bestStore}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                      <div>
-                        <div className="text-xs text-slate-400 line-through">
-                          {formatPrice(getProductOriginalPrice(product))}
-                        </div>
-                        <div className="text-base font-extrabold text-blue-600">
-                          {formatPrice(getProductBestPrice(product))}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleWatchlist(product.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
-                          title="Remove from watchlist"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        <Link
-                          to={`/products/${product.slug || product.id}`}
-                          className="px-3 py-1.5 bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
-                        >
-                          Details
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>
@@ -374,15 +421,15 @@ export default function DashboardPage() {
             <div className="space-y-3 mb-6 text-sm">
               <div className="flex items-center justify-between text-slate-600 text-xs">
                 <span>Account Status</span>
-                <span className="font-bold text-slate-800">Pro Member</span>
+                <span className="font-bold text-slate-800">Active Member</span>
               </div>
               <div className="flex items-center justify-between text-slate-600 text-xs">
-                <span>Monitoring Interval</span>
-                <span className="font-bold text-slate-800">Every 15 mins</span>
+                <span>Locale</span>
+                <span className="font-bold text-slate-800">{user?.locale || 'en-US'}</span>
               </div>
               <div className="flex items-center justify-between text-slate-600 text-xs">
                 <span>Default Currency</span>
-                <span className="font-bold text-blue-600">INR (₹)</span>
+                <span className="font-bold text-blue-600">{currency}</span>
               </div>
             </div>
 
@@ -395,11 +442,11 @@ export default function DashboardPage() {
                 Edit Profile & Preferences
               </Link>
               <button
-                onClick={() => {
-                  logout();
+                onClick={async () => {
+                  await logout();
                   navigate('/login');
                 }}
-                className="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl transition-colors"
+                className="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Sign Out Safely
               </button>
