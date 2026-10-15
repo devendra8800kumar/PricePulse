@@ -34,15 +34,15 @@ export function AppProvider({ children }) {
     return localStorage.getItem('pricepulse_currency') || 'INR';
   });
 
-  const toggleCurrency = () => {
+  const toggleCurrency = useCallback(() => {
     setCurrency((prev) => {
       const next = prev === 'INR' ? 'USD' : 'INR';
       localStorage.setItem('pricepulse_currency', next);
       return next;
     });
-  };
+  }, []);
 
-  const formatPrice = (amount) => formatCurrency(amount, currency);
+  const formatPrice = useCallback((amount) => formatCurrency(amount, currency), [currency]);
 
   // 2. Watchlist (Local fallback + client-side sync)
   const [watchlist, setWatchlist] = useState(() => {
@@ -58,16 +58,16 @@ export function AppProvider({ children }) {
     localStorage.setItem('pricepulse_watchlist', JSON.stringify(watchlist));
   }, [watchlist]);
 
-  const toggleWatchlist = (productId) => {
+  const toggleWatchlist = useCallback((productId) => {
     setWatchlist((prev) => {
       const exists = prev.includes(productId);
       const next = exists ? prev.filter(id => id !== productId) : [...prev, productId];
       showToast(exists ? 'Removed from Watchlist' : 'Saved to Watchlist', exists ? 'info' : 'success');
       return next;
     });
-  };
+  }, [showToast]);
 
-  const isWatchlisted = (productId) => watchlist.includes(productId);
+  const isWatchlisted = useCallback((productId) => watchlist.includes(productId), [watchlist]);
 
   // 3. Comparison List (max 3 items)
   const [compareList, setCompareList] = useState(() => {
@@ -83,7 +83,7 @@ export function AppProvider({ children }) {
     localStorage.setItem('pricepulse_compare', JSON.stringify(compareList));
   }, [compareList]);
 
-  const toggleCompare = (productId) => {
+  const toggleCompare = useCallback((productId) => {
     setCompareList((prev) => {
       if (prev.includes(productId)) {
         showToast('Removed from comparison', 'info');
@@ -96,19 +96,19 @@ export function AppProvider({ children }) {
       showToast('Added to comparison', 'success');
       return [...prev, productId];
     });
-  };
+  }, [showToast]);
 
-  const removeFromCompare = (productId) => {
+  const removeFromCompare = useCallback((productId) => {
     setCompareList((prev) => prev.filter(id => id !== productId));
     showToast('Removed from comparison', 'info');
-  };
+  }, [showToast]);
 
-  const clearCompare = () => {
+  const clearCompare = useCallback(() => {
     setCompareList([]);
     showToast('Comparison cleared', 'info');
-  };
+  }, [showToast]);
 
-  const isInCompare = (productId) => compareList.includes(productId);
+  const isInCompare = useCallback((productId) => compareList.includes(productId), [compareList]);
 
   // 4. Target Price Alerts (Local fallback storage)
   const [priceAlerts, setPriceAlerts] = useState(() => {
@@ -141,7 +141,7 @@ export function AppProvider({ children }) {
     localStorage.setItem('pricepulse_alerts', JSON.stringify(priceAlerts));
   }, [priceAlerts]);
 
-  const addPriceAlert = (productId, targetPrice) => {
+  const addPriceAlert = useCallback((productId, targetPrice) => {
     const newAlert = {
       id: `alert-${Date.now()}`,
       productId,
@@ -151,14 +151,14 @@ export function AppProvider({ children }) {
       isReached: false,
     };
     setPriceAlerts(prev => [newAlert, ...prev]);
-    showToast(`Target drop alert set at ${formatPrice(targetPrice)}!`, 'success');
+    showToast(`Target drop alert set at ${formatCurrency(targetPrice, currency)}!`, 'success');
     return newAlert;
-  };
+  }, [currency, showToast]);
 
-  const removePriceAlert = (alertId) => {
+  const removePriceAlert = useCallback((alertId) => {
     setPriceAlerts(prev => prev.filter(a => a.id !== alertId));
     showToast('Price alert removed', 'info');
-  };
+  }, [showToast]);
 
   // 5. User Authentication & Profile State (/api/v1/auth, /api/v1/users)
   const [user, setUser] = useState(() => {
@@ -559,14 +559,16 @@ export function AppProvider({ children }) {
     }
   });
 
-  const addToRecentlyViewed = (productId) => {
+  const addToRecentlyViewed = useCallback((productId) => {
+    if (!productId) return;
     setRecentlyViewed(prev => {
+      if (prev[0] === productId) return prev;
       const filtered = prev.filter(id => id !== productId);
       const next = [productId, ...filtered].slice(0, 8);
       localStorage.setItem('pricepulse_recent', JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
   // Quick View Modal State
   const [quickViewProduct, setQuickViewProduct] = useState(null);
@@ -575,20 +577,20 @@ export function AppProvider({ children }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchInitialQuery, setSearchInitialQuery] = useState('');
 
-  const openSearch = (query = '') => {
+  const openSearch = useCallback((query = '') => {
     setSearchInitialQuery(query);
     setIsSearchOpen(true);
-  };
+  }, []);
 
-  const closeSearch = () => {
+  const closeSearch = useCallback(() => {
     setIsSearchOpen(false);
     setSearchInitialQuery('');
-  };
+  }, []);
 
   // Track Product URL Modal State
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const openTrackModal = () => setIsTrackModalOpen(true);
-  const closeTrackModal = () => setIsTrackModalOpen(false);
+  const openTrackModal = useCallback(() => setIsTrackModalOpen(true), []);
+  const closeTrackModal = useCallback(() => setIsTrackModalOpen(false), []);
 
   const value = {
     currency,

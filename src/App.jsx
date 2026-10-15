@@ -34,6 +34,7 @@ export default function App() {
             <Route path="/price-history" element={<PriceHistoryPage />} />
             <Route path="/ai-insights" element={<AiInsightsPage />} />
             <Route path="/watchlist" element={<WatchlistPage />} />
+            <Route path="/wishlist" element={<WatchlistPage />} />
             <Route path="/price-alerts" element={<PriceAlertsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />

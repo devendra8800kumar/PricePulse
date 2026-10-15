@@ -10,7 +10,9 @@ import {
   TrendingDown, 
   Calendar, 
   ChevronRight,
-  Cpu
+  Cpu,
+  RefreshCw,
+  LogIn
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -36,9 +38,15 @@ export default function ProductDetailsPage() {
     toggleCompare, 
     addPriceAlert,
     addToRecentlyViewed,
+    apiProducts,
+    login,
+    showToast
   } = useApp();
 
   const [timeRange, setTimeRange] = useState('30d'); // '7d', '30d', '90d', '1y'
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [isDemoLoggingIn, setIsDemoLoggingIn] = useState(false);
   const [apiProductData, setApiProductData] = useState(null);
   const [apiStats, setApiStats] = useState(null);
   const [apiRecommendation, setApiRecommendation] = useState(null);
@@ -49,6 +57,7 @@ export default function ProductDetailsPage() {
     let isMounted = true;
     async function loadApiDetails() {
       setIsLoading(true);
+      setFetchError(null);
       try {
         const [prod, stats, rec, prices] = await Promise.allSettled([
           productService.getProductById(id),
@@ -57,14 +66,20 @@ export default function ProductDetailsPage() {
           productService.getProductPrices(id, { range: timeRange, granularity: 'daily' }),
         ]);
 
-        if (isMounted && prod.status === 'fulfilled' && prod.value) {
-          setApiProductData(prod.value);
-          if (stats.status === 'fulfilled') setApiStats(stats.value);
-          if (rec.status === 'fulfilled') setApiRecommendation(rec.value);
-          if (prices.status === 'fulfilled') setApiPrices(prices.value);
+        if (isMounted) {
+          if (prod.status === 'fulfilled' && prod.value) {
+            setApiProductData(prod.value);
+            if (stats.status === 'fulfilled') setApiStats(stats.value);
+            if (rec.status === 'fulfilled') setApiRecommendation(rec.value);
+            if (prices.status === 'fulfilled') setApiPrices(prices.value);
+          } else if (prod.status === 'rejected') {
+            setFetchError(prod.reason?.message || 'Failed to fetch product details');
+          }
         }
       } catch (err) {
-        console.warn('Backend API product fetch note:', err.message);
+        if (isMounted) {
+          setFetchError(err.message || 'Error communicating with backend API');
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -74,8 +89,9 @@ export default function ProductDetailsPage() {
     return () => { isMounted = false; };
   }, [id, timeRange]);
 
-  // Fallback to mock data if API product is not loaded
-  const baseDemoProduct = getProductById(id) || TRENDING_PRODUCTS[0];
+  // Fallback to mock data or context-synced API product
+  const matchedFromContext = (apiProducts || []).find(p => p.id === id);
+  const baseDemoProduct = getProductById(id) || (matchedFromContext ? normalizeApiProduct(matchedFromContext) : null);
   const product = apiProductData 
     ? normalizeApiProduct(apiProductData) 
     : baseDemoProduct;
@@ -87,18 +103,105 @@ export default function ProductDetailsPage() {
     }
   }, [productId, addToRecentlyViewed]);
 
-  const [alertTargetPrice, setAlertTargetPrice] = useState(
-    product ? Math.round((currency === 'USD' ? product.currentPriceUSD : product.currentPriceINR) * 0.95) : 0
-  );
+  const productPrice = product ? (currency === 'USD' ? product.currentPriceUSD : product.currentPriceINR) : 0;
+  const [customAlertPrice, setCustomAlertPrice] = useState(null);
+  const alertTargetPrice = customAlertPrice !== null ? customAlertPrice : Math.round(productPrice * 0.95);
   const [alertSubmitted, setAlertSubmitted] = useState(false);
 
-  if (!product) {
+  const handleQuickDemoLogin = async () => {
+    try {
+      setIsDemoLoggingIn(true);
+      await login('demo@pricepulse.com', 'Password123!');
+      showToast('Signed in to PricePulse successfully!', 'success');
+    } catch (err) {
+      showToast(err.message || 'Demo authentication failed', 'error');
+    } finally {
+      setIsDemoLoggingIn(false);
+    }
+  };
+
+  if (isLoading && !product) {
     return (
-      <div className="py-20 text-center">
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Product Not Found</h2>
-        <Link to="/products" className="text-sm font-semibold text-blue-600 hover:underline">
-          Return to Product Catalog
-        </Link>
+      <div className="py-16 bg-slate-50 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-6">
+            <Link to="/" className="hover:text-blue-600">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <Link to="/products" className="hover:text-blue-600">Products</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span>Loading product telemetry...</span>
+          </div>
+          <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/90 shadow-2xs max-w-xl mx-auto">
+            <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
+            <h2 className="text-lg font-bold text-slate-900 mb-1">Retrieving Product Telemetry</h2>
+            <p className="text-xs text-slate-500">
+              Querying database price records and machine-learning recommendation models...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    const isUnauthenticated = fetchError && (fetchError.includes('Not authenticated') || fetchError.includes('401'));
+    return (
+      <div className="py-16 bg-slate-50 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-xs text-slate-500 mb-6">
+            <Link to="/" className="hover:text-blue-600">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <Link to="/products" className="hover:text-blue-600">Products</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="font-mono text-slate-700">{id?.slice(0, 8)}...</span>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-lg mx-auto shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-7 h-7 text-blue-600" />
+            </div>
+
+            {isUnauthenticated ? (
+              <>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Sign In to View Tracked Item</h2>
+                <p className="text-xs text-slate-600 mb-6 leading-relaxed">
+                  Product <span className="font-mono font-bold text-slate-800">{id}</span> is actively tracked via our cloud scraper. Sign in with your PricePulse account to access real-time price history, AI timing recommendations, and threshold alerts.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleQuickDemoLogin}
+                    disabled={isDemoLoggingIn}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isDemoLoggingIn ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <LogIn className="w-3.5 h-3.5" />}
+                    <span>1-Click Demo Sign In</span>
+                  </button>
+                  <Link
+                    to="/login"
+                    state={{ from: { pathname: `/products/${id}` } }}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
+                  >
+                    Custom Sign In
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Product Not Found</h2>
+                <p className="text-xs text-slate-500 mb-6">
+                  We couldn't locate product ID <span className="font-mono text-slate-700 font-semibold">{id}</span>. It may have been archived or removed from active scraping queues.
+                </p>
+                <Link
+                  to="/products"
+                  className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors"
+                >
+                  Return to Product Catalog
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -107,13 +210,14 @@ export default function ProductDetailsPage() {
   const compared = isInCompare(product.id);
 
   const az = product.retailers?.find(r => r.name.toLowerCase().includes('amazon')) || product.retailers?.[0] || {
-    name: 'Amazon', priceINR: product.currentPriceINR, priceUSD: product.currentPriceUSD, delivery: 'Fast Delivery', bankOffer: 'Instant Bank Discount', url: product.url
+    name: 'Amazon', priceINR: product.currentPriceINR || 0, priceUSD: product.currentPriceUSD || 0, delivery: 'Fast Delivery', bankOffer: 'Instant Bank Discount', url: product.url
   };
   const fk = product.retailers?.find(r => r.name.toLowerCase().includes('flipkart')) || product.retailers?.[1] || az;
 
-  const azPrice = currency === 'USD' ? az.priceUSD : az.priceINR;
-  const fkPrice = currency === 'USD' ? fk.priceUSD : fk.priceINR;
-  const lowestPrice = Math.min(azPrice, fkPrice);
+  const azPrice = currency === 'USD' ? (az.priceUSD || 0) : (az.priceINR || 0);
+  const fkPrice = currency === 'USD' ? (fk.priceUSD || 0) : (fk.priceINR || 0);
+  const lowestPrice = Math.min(azPrice || Infinity, fkPrice || Infinity);
+  const safeLowestPrice = isFinite(lowestPrice) ? lowestPrice : (currency === 'USD' ? (product.currentPriceUSD || 0) : (product.currentPriceINR || 0));
 
   // Extrema and averages from real API stats if available
   const floorPrice = apiStats?.all_time_low != null
@@ -140,10 +244,10 @@ export default function ProductDetailsPage() {
   const recReason = apiRecommendation?.reasoning || product.aiReasoning || product.aiVerdictReason;
   const recPhase = apiRecommendation?.phase || (product.isLiveApi ? 'heuristic' : 'learned');
 
-  // Chart dataset: from live apiPrices.data if available, otherwise mock periods
+  // Chart dataset: from live apiPrices.data if available, otherwise synthetic or mock
   let chartData = [];
   if (apiPrices?.data && apiPrices.data.length > 0) {
-    chartData = apiPrices.data.map(pt => {
+    const rawData = apiPrices.data.map(pt => {
       const d = new Date(pt.timestamp);
       const label = `${d.getDate()}/${d.getMonth() + 1}`;
       const p = currency === 'USD' ? Math.round(pt.price / 85) : pt.price;
@@ -153,13 +257,39 @@ export default function ProductDetailsPage() {
         flipkart: Math.round(p * 1.02),
       };
     });
+
+    if (rawData.length === 1) {
+      const single = rawData[0];
+      const basePrice = single.amazon;
+      chartData = [
+        { label: '30d Floor', amazon: Math.round(basePrice * 1.03), flipkart: Math.round(basePrice * 1.02) },
+        { label: '7d Avg', amazon: Math.round(basePrice * 1.01), flipkart: Math.round(basePrice * 1.01) },
+        { label: single.label, amazon: basePrice, flipkart: single.flipkart }
+      ];
+    } else {
+      chartData = rawData;
+    }
   } else {
     const rawChartData = product.historyPeriods?.[timeRange] || product.historyPeriods?.['30d'] || product.historyPeriods?.['6m'] || [];
-    chartData = rawChartData.map(pt => ({
-      label: pt.label,
-      amazon: currency === 'USD' ? Math.round(pt.amazon / 100) : pt.amazon,
-      flipkart: currency === 'USD' ? Math.round(pt.flipkart / 100) : pt.flipkart,
-    }));
+    if (rawChartData && rawChartData.length > 0) {
+      chartData = rawChartData.map(pt => ({
+        label: pt.label,
+        amazon: currency === 'USD' ? Math.round(pt.amazon / 100) : pt.amazon,
+        flipkart: currency === 'USD' ? Math.round(pt.flipkart / 100) : pt.flipkart,
+      }));
+    } else {
+      const cur = currency === 'USD' ? product.currentPriceUSD : product.currentPriceINR;
+      const low = currency === 'USD' ? product.lowestHistoricalPriceUSD : product.lowestHistoricalPriceINR;
+      const high = currency === 'USD' ? product.highestHistoricalPriceUSD : product.highestHistoricalPriceINR;
+      const baseline = high > 0 ? high : cur;
+      const mid = Math.round(((low || cur) + baseline) / 2);
+      chartData = [
+        { label: '30d ago', amazon: baseline, flipkart: baseline },
+        { label: '15d ago', amazon: mid, flipkart: mid },
+        { label: '7d ago', amazon: cur, flipkart: cur },
+        { label: 'Today', amazon: cur, flipkart: cur },
+      ];
+    }
   }
 
   // Related products
@@ -263,7 +393,7 @@ export default function ProductDetailsPage() {
                     </span>
                     <div className="flex items-baseline gap-3">
                       <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                        {formatPrice(lowestPrice)}
+                        {formatPrice(safeLowestPrice)}
                       </span>
                     </div>
                   </div>
@@ -387,7 +517,7 @@ export default function ProductDetailsPage() {
               </div>
               <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[10px] text-slate-400 block">Current Price</span>
-                <span className="text-xs sm:text-sm font-black text-blue-700">{formatPrice(lowestPrice)}</span>
+                <span className="text-xs sm:text-sm font-black text-blue-700">{formatPrice(safeLowestPrice)}</span>
               </div>
             </div>
 
@@ -507,8 +637,8 @@ export default function ProductDetailsPage() {
                   </span>
                   <input
                     type="number"
-                    value={alertTargetPrice}
-                    onChange={(e) => setAlertTargetPrice(Number(e.target.value))}
+                    value={alertTargetPrice || ''}
+                    onChange={(e) => setCustomAlertPrice(Number(e.target.value))}
                     className="w-full pl-7 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-blue-500"
                     placeholder="Enter target price..."
                     required

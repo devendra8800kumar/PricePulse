@@ -12,6 +12,7 @@ import {
   ToggleRight
 } from 'lucide-react';
 import { TRENDING_PRODUCTS } from '../data/electronicsData';
+import { normalizeApiProduct } from '../services/productService';
 import { useApp } from '../context/AppContext';
 
 export default function WatchlistPage() {
@@ -32,7 +33,19 @@ export default function WatchlistPage() {
     showToast
   } = useApp();
 
-  const watchlistedProducts = TRENDING_PRODUCTS.filter(p => watchlist.includes(p.id));
+  const allKnownProducts = React.useMemo(() => {
+    const normalizedApi = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
+    const apiIds = new Set(normalizedApi.map(p => p.id));
+    const dedupedDemo = TRENDING_PRODUCTS.filter(p => !apiIds.has(p.id));
+    return [...normalizedApi, ...dedupedDemo];
+  }, [apiProducts]);
+
+  const watchlistedProducts = React.useMemo(() => {
+    return (watchlist || [])
+      .map(id => allKnownProducts.find(p => p.id === id))
+      .filter(Boolean);
+  }, [watchlist, allKnownProducts]);
+
   const [activeTab, setActiveTab] = useState(() => {
     return subscriptions.length > 0 ? 'cloud' : 'bookmarks';
   });
@@ -64,13 +77,13 @@ export default function WatchlistPage() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-2">
               <Bookmark className="w-3.5 h-3.5 text-blue-600" />
-              <span>Personal Tracking Tray & Cloud Subscriptions</span>
+              <span>Personal Tracking Tray • Wishlist & Cloud Subscriptions</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              My <span className="text-blue-600">Watchlist</span>
+              My <span className="text-blue-600">Watchlist & Wishlist</span>
             </h1>
             <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-xl">
-              Track live price movements across Amazon and Flipkart for your saved electronics and cloud subscriptions.
+              Track live price movements across Amazon and Flipkart for your saved electronics, wishlist items, and cloud subscriptions.
             </p>
           </div>
 
@@ -141,9 +154,10 @@ export default function WatchlistPage() {
             ) : subscriptions.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {subscriptions.map((sub) => {
-                  const matchedProd = apiProducts.find(p => p.id === sub.product_id) || 
-                    TRENDING_PRODUCTS.find(p => p.id === sub.product_id) || 
-                    TRENDING_PRODUCTS[0];
+                  const rawProd = (apiProducts || []).find(p => p.id === sub.product_id);
+                  const matchedProd = rawProd 
+                    ? normalizeApiProduct(rawProd) 
+                    : (TRENDING_PRODUCTS.find(p => p.id === sub.product_id) || TRENDING_PRODUCTS[0]);
                   const currentPrice = currency === 'USD' ? (matchedProd.currentPriceUSD || 100) : (matchedProd.currentPriceINR || 8000);
                   const targetVal = sub.target_price ?? 0;
                   const isReached = currentPrice <= targetVal;
@@ -272,12 +286,15 @@ export default function WatchlistPage() {
             {watchlistedProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {watchlistedProducts.map((product) => {
-                  const az = product.retailers.find(r => r.name.toLowerCase().includes('amazon')) || product.retailers[0];
-                  const fk = product.retailers.find(r => r.name.toLowerCase().includes('flipkart')) || product.retailers[1] || product.retailers[0];
-                  const azPrice = currency === 'USD' ? az.priceUSD : az.priceINR;
-                  const fkPrice = currency === 'USD' ? fk.priceUSD : fk.priceINR;
-                  const lowest = Math.min(azPrice, fkPrice);
-                  const floor = currency === 'USD' ? product.lowestHistoricalPriceUSD : product.lowestHistoricalPriceINR;
+                  const az = product.retailers?.find(r => r.name.toLowerCase().includes('amazon')) || product.retailers?.[0] || {
+                    name: 'Amazon', priceINR: product.currentPriceINR || 0, priceUSD: product.currentPriceUSD || 0
+                  };
+                  const fk = product.retailers?.find(r => r.name.toLowerCase().includes('flipkart')) || product.retailers?.[1] || az;
+                  const azPrice = currency === 'USD' ? (az.priceUSD || 0) : (az.priceINR || 0);
+                  const fkPrice = currency === 'USD' ? (fk.priceUSD || 0) : (fk.priceINR || 0);
+                  const lowest = Math.min(azPrice || Infinity, fkPrice || Infinity);
+                  const safeLowest = isFinite(lowest) ? lowest : (currency === 'USD' ? (product.currentPriceUSD || 0) : (product.currentPriceINR || 0));
+                  const floor = currency === 'USD' ? (product.lowestHistoricalPriceUSD || safeLowest) : (product.lowestHistoricalPriceINR || safeLowest);
 
                   return (
                     <div
