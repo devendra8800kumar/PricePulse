@@ -11,7 +11,9 @@ import {
   LayoutDashboard, 
   LogIn,
   ChevronRight,
-  PlusCircle
+  PlusCircle,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Button from './ui/Button';
@@ -21,6 +23,8 @@ export default function Navbar() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const { 
+    theme,
+    toggleTheme,
     currency, 
     toggleCurrency, 
     watchlist, 
@@ -68,7 +72,7 @@ export default function Navbar() {
   const watchlistCount = watchlist.length;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/80 transition-all duration-200 select-none">
+    <header className="sticky top-0 z-50 bg-white/85 dark:bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-all duration-200 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           
@@ -86,10 +90,10 @@ export default function Navbar() {
               </div>
               
               <div className="flex items-center gap-1.5">
-                <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
-                  Price<span className="text-blue-600">Pulse</span>
+                <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  Price<span className="text-blue-600 dark:text-blue-400">Pulse</span>
                 </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 leading-none">
                   AI
                 </span>
               </div>
@@ -107,8 +111,8 @@ export default function Navbar() {
                 className={({ isActive }) =>
                   `relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 flex items-center gap-1.5 ${
                     isActive
-                      ? 'text-blue-600 bg-blue-50/80 font-semibold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/60 font-semibold shadow-2xs border border-transparent dark:border-blue-800/50'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/70'
                   }`
                 }
               >
@@ -123,8 +127,8 @@ export default function Navbar() {
                     title={item.dotTitle}
                     className={`w-1.5 h-1.5 rounded-full ${
                       item.dot === 'amber' 
-                        ? 'bg-amber-500 ring-2 ring-amber-100' 
-                        : 'bg-cyan-500 ring-2 ring-cyan-100'
+                        ? 'bg-amber-500 ring-2 ring-amber-100 dark:ring-amber-900/60' 
+                        : 'bg-cyan-500 ring-2 ring-cyan-100 dark:ring-cyan-900/60'
                     }`} 
                   />
                 )}
@@ -141,36 +145,51 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => openSearch('')}
-              className="h-9 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-900 transition-all duration-150 text-xs flex items-center gap-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+              className="h-9 px-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-150 text-xs flex items-center gap-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
               title="Search electronics (⌘K)"
               aria-label="Search electronics"
             >
-              <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
-              <span className="hidden xl:inline text-slate-500 font-normal">Search...</span>
-              <kbd className="hidden sm:inline-flex items-center text-[10px] font-mono text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200/80 shadow-2xs">
+              <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+              <span className="hidden xl:inline text-slate-500 dark:text-slate-400 font-normal">Search...</span>
+              <kbd className="hidden sm:inline-flex items-center text-[10px] font-mono text-slate-400 dark:text-slate-400 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-200/80 dark:border-slate-700 shadow-2xs">
                 ⌘K
               </kbd>
+            </button>
+
+            {/* Dark / Light Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 transition-all duration-150 cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle Dark Mode"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400 transition-transform duration-300 hover:rotate-45" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-600 transition-transform duration-300 hover:-rotate-12" />
+              )}
             </button>
 
             {/* Currency Toggle (Desktop lg+ only) */}
             <button
               type="button"
               onClick={toggleCurrency}
-              className="hidden lg:inline-flex items-center gap-1 h-9 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600 transition-all duration-150 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+              className="hidden lg:inline-flex items-center gap-1 h-9 px-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 transition-all duration-150 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
               title="Toggle Currency between INR (₹) and USD ($)"
             >
-              <span className={currency === 'INR' ? 'text-blue-600 font-bold' : 'text-slate-400'}>₹ INR</span>
-              <span className="text-slate-300">/</span>
-              <span className={currency === 'USD' ? 'text-blue-600 font-bold' : 'text-slate-400'}>$ USD</span>
+              <span className={currency === 'INR' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400 dark:text-slate-500'}>₹ INR</span>
+              <span className="text-slate-300 dark:text-slate-600">/</span>
+              <span className={currency === 'USD' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400 dark:text-slate-500'}>$ USD</span>
             </button>
 
             {/* Watchlist Link (Desktop lg+ only) */}
             <Link
               to="/watchlist"
-              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700 hover:text-slate-900 transition-all duration-150 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 relative"
+              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-all duration-150 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 relative"
               title="View Watchlist"
             >
-              <Bookmark className="w-3.5 h-3.5 text-blue-600" />
+              <Bookmark className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span className="hidden xl:inline">Watchlist</span>
               {watchlistCount > 0 && (
                 <span className="flex items-center justify-center min-w-4 h-4 px-1 text-[10px] font-bold rounded-full bg-blue-600 text-white">
@@ -185,9 +204,9 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={openTrackModal}
-                  className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-colors cursor-pointer"
+                  className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800/60 transition-colors cursor-pointer"
                 >
-                  <PlusCircle className="w-3.5 h-3.5 text-blue-600" />
+                  <PlusCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Track URL</span>
                 </button>
 
@@ -195,23 +214,23 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="h-9 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center gap-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+                    className="h-9 px-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 flex items-center gap-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
                     aria-label="User account menu"
                   >
                     <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
                       {user.name.charAt(0)}
                     </div>
-                    <span className="text-xs font-semibold text-slate-800 hidden sm:inline max-w-24 truncate">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 hidden sm:inline max-w-24 truncate">
                       {user.name.split(' ')[0]}
                     </span>
                   </button>
 
                   {/* Dropdown Menu */}
                   {userDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl py-1.5 z-50 text-xs animate-in fade-in duration-150">
-                      <div className="px-3 py-2 border-b border-slate-100">
-                        <p className="font-bold text-slate-900 truncate">{user.name}</p>
-                        <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                    <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1.5 z-50 text-xs animate-in fade-in duration-150 text-slate-700 dark:text-slate-200">
+                      <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+                        <p className="font-bold text-slate-900 dark:text-slate-100 truncate">{user.name}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
                       </div>
 
                       <button
@@ -220,16 +239,16 @@ export default function Navbar() {
                           setUserDropdownOpen(false);
                           openTrackModal();
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors cursor-pointer text-left"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer text-left"
                       >
-                        <PlusCircle className="w-3.5 h-3.5 text-blue-600" />
+                        <PlusCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                         <span>Track Product URL</span>
                       </button>
 
                       <Link
                         to="/dashboard"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       >
                         <LayoutDashboard className="w-3.5 h-3.5" />
                         <span>User Dashboard</span>
@@ -238,13 +257,13 @@ export default function Navbar() {
                       <Link
                         to="/profile"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       >
                         <User className="w-3.5 h-3.5" />
                         <span>Profile & Settings</span>
                       </Link>
 
-                    <div className="pt-1 border-t border-slate-100">
+                    <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
                       <button
                         type="button"
                         onClick={() => {
@@ -252,7 +271,7 @@ export default function Navbar() {
                           logout();
                           navigate('/');
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         <span>Sign Out</span>
@@ -269,7 +288,7 @@ export default function Navbar() {
                   to="/login"
                   variant="ghost"
                   size="sm"
-                  className="hidden lg:inline-flex h-9 px-3 text-xs text-slate-700"
+                  className="hidden lg:inline-flex h-9 px-3 text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                 >
                   Log in
                 </Button>
@@ -290,10 +309,10 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+              className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
-              {mobileMenuOpen ? <X className="w-4 h-4 text-blue-600" /> : <Menu className="w-4 h-4" />}
+              {mobileMenuOpen ? <X className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <Menu className="w-4 h-4" />}
             </button>
 
           </div>
@@ -305,7 +324,7 @@ export default function Navbar() {
       {/* MOBILE & TABLET SLIDE-DOWN DRAWER (<1024px)               */}
       {/* ========================================================= */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 pt-3 pb-6 space-y-3 shadow-xl animate-in slide-in-from-top-2 duration-150">
+        <div className="lg:hidden bg-white/95 dark:bg-[#0B0F19]/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 pt-3 pb-6 space-y-3 shadow-xl animate-in slide-in-from-top-2 duration-150">
           {/* Main Navigation Links */}
           <div className="space-y-1">
             {navLinks.map((item) => (
@@ -316,8 +335,8 @@ export default function Navbar() {
                 className={({ isActive }) =>
                   `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                     isActive 
-                      ? 'bg-blue-50 text-blue-700 font-bold' 
-                      : 'text-slate-700 hover:bg-slate-50'
+                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold' 
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/70'
                   }`
                 }
               >
@@ -339,27 +358,49 @@ export default function Navbar() {
             <NavLink
               to="/watchlist"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <Bookmark className="w-4 h-4 text-blue-600" />
+                <Bookmark className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <span>Watchlist</span>
               </div>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                 {watchlistCount}
               </span>
             </NavLink>
           </div>
 
-          {/* Currency Toggle & Auth inside Drawer */}
-          <div className="pt-3 border-t border-slate-100 space-y-3">
+          {/* Theme, Currency & Auth inside Drawer */}
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+            {/* Theme Mode Toggle in Drawer */}
+            <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-700">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Theme Mode:</span>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 shadow-2xs flex items-center gap-1.5 cursor-pointer"
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Dark Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Light Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             {/* Currency Switcher */}
-            <div className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-xs font-medium text-slate-600">Active Currency:</span>
+            <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-700">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Active Currency:</span>
               <button
                 type="button"
                 onClick={toggleCurrency}
-                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-blue-600 shadow-2xs"
+                className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-blue-600 dark:text-blue-400 shadow-2xs cursor-pointer"
               >
                 {currency === 'INR' ? '₹ INR (Indian Rupee)' : '$ USD (US Dollar)'}
               </button>
@@ -371,9 +412,9 @@ export default function Navbar() {
                 <Link
                   to="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full h-11 rounded-xl text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-11 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                 >
-                  <LayoutDashboard className="w-4 h-4 text-blue-600" />
+                  <LayoutDashboard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   <span>Go to Dashboard ({user.name.split(' ')[0]})</span>
                 </Link>
 
@@ -384,7 +425,7 @@ export default function Navbar() {
                     logout();
                     navigate('/');
                   }}
-                  className="flex items-center justify-center gap-2 w-full h-9 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-2 w-full h-9 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>

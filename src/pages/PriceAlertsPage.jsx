@@ -12,6 +12,7 @@ import {
   TrendingDown 
 } from 'lucide-react';
 import { TRENDING_PRODUCTS } from '../data/electronicsData';
+import { normalizeApiProduct } from '../services/productService';
 import { useApp } from '../context/AppContext';
 
 export default function PriceAlertsPage() {
@@ -36,12 +37,24 @@ export default function PriceAlertsPage() {
     openTrackModal
   } = useApp();
 
+  // Merge live API products with demo catalog
+  const allAvailableProducts = React.useMemo(() => {
+    const normalizedApi = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
+    const apiIds = new Set(normalizedApi.map(p => p.id));
+    const dedupedDemo = TRENDING_PRODUCTS.filter(p => !apiIds.has(p.id));
+    return [...normalizedApi, ...dedupedDemo];
+  }, [apiProducts]);
+
   const [activeTab, setActiveTab] = useState('subscriptions'); // 'subscriptions' | 'alerts'
   const [filterUnreadOnly, setFilterUnreadOnly] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState(TRENDING_PRODUCTS[0].id);
-  const [targetInputPrice, setTargetInputPrice] = useState(
-    Math.round((currency === 'USD' ? TRENDING_PRODUCTS[0].currentPriceUSD : TRENDING_PRODUCTS[0].currentPriceINR) * 0.95)
-  );
+  const [selectedProductId, setSelectedProductId] = useState(() => {
+    return apiProducts?.[0]?.id || TRENDING_PRODUCTS[0].id;
+  });
+  const [targetInputPrice, setTargetInputPrice] = useState(() => {
+    const initProd = (apiProducts?.[0] ? normalizeApiProduct(apiProducts[0]) : null) || TRENDING_PRODUCTS[0];
+    const cur = currency === 'USD' ? initProd.currentPriceUSD : initProd.currentPriceINR;
+    return Math.round(cur * 0.95);
+  });
   const [editingSubId, setEditingSubId] = useState(null);
   const [editPriceVal, setEditPriceVal] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +69,7 @@ export default function PriceAlertsPage() {
   const handleProductSelectChange = (e) => {
     const prodId = e.target.value;
     setSelectedProductId(prodId);
-    const prod = TRENDING_PRODUCTS.find(p => p.id === prodId);
+    const prod = allAvailableProducts.find(p => p.id === prodId);
     if (prod) {
       setTargetInputPrice(Math.round((currency === 'USD' ? prod.currentPriceUSD : prod.currentPriceINR) * 0.95));
     }
@@ -73,8 +86,8 @@ export default function PriceAlertsPage() {
       return;
     }
 
-    const prod = TRENDING_PRODUCTS.find(p => p.id === selectedProductId);
-    const retailerUrl = prod?.retailers?.[0]?.url || `https://www.amazon.in/dp/mock-${selectedProductId}`;
+    const prod = allAvailableProducts.find(p => p.id === selectedProductId);
+    const retailerUrl = prod?.url || prod?.retailers?.[0]?.url || `https://www.amazon.in/dp/mock-${selectedProductId}`;
 
     setIsSubmitting(true);
     try {
@@ -250,7 +263,7 @@ export default function PriceAlertsPage() {
                     onChange={handleProductSelectChange}
                     className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-semibold focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    {TRENDING_PRODUCTS.map(p => (
+                    {allAvailableProducts.map(p => (
                       <option key={p.id} value={p.id}>
                         {p.name} ({formatPrice(currency === 'USD' ? p.currentPriceUSD : p.currentPriceINR)})
                       </option>

@@ -78,22 +78,22 @@ export default function AiSection({ currency = 'INR' }) {
   const currentScenario = demoScenarios[selectedDemoProduct];
 
   return (
-    <section id="ai-insights" className="py-16 sm:py-20 bg-slate-50 border-b border-slate-200/80 relative">
+    <section id="ai-insights" className="py-16 sm:py-20 bg-slate-50 dark:bg-[#0b0f19] border-b border-slate-200/80 dark:border-slate-800 relative transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-semibold mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>AI Price Intelligence</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
             "Don't just find the price. <br className="hidden sm:inline" />
-            <span className="text-blue-600">Find the right time to buy."</span>
+            <span className="text-blue-600 dark:text-blue-400">Find the right time to buy."</span>
           </h2>
 
-          <p className="text-slate-600 text-sm sm:text-base">
+          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
             PricePulse evaluates historical discount patterns, sale schedules, and platform price wars to generate actionable buying advice.
           </p>
         </div>
@@ -103,38 +103,38 @@ export default function AiSection({ currency = 'INR' }) {
           
           {/* Left Column: 3 Pillars */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-blue-300 transition-colors">
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
                   <BrainCircuit className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Seasonal Cadence Models</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Seasonal Cadence Models</h3>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 Tracks historical Prime Day, Big Billion Days, and monthly clearance sales to forecast when platforms are likely to cut prices next.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-blue-300 transition-colors">
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
                   <Gauge className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Buy Score Index (0-100)</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Buy Score Index (0-100)</h3>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 Scores every gadget based on proximity to historical floor prices, stock liquidity, and current retailer competition.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-blue-300 transition-colors">
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
                   <ShieldAlert className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Fake Discount Auditing</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Fake Discount Auditing</h3>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 Flags artificial MRP markups before festive sales so you only act on verified, genuine savings.
               </p>
             </div>
@@ -142,31 +142,31 @@ export default function AiSection({ currency = 'INR' }) {
 
           {/* Right Column: Premium AI Insights Card */}
           <div className="lg:col-span-7">
-            <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-7 shadow-xs">
+            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-7 shadow-xs dark:shadow-md">
               
               {/* Header with Switcher Tabs */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="flex h-2 w-2 rounded-full bg-blue-600"></span>
-                    <span className="text-xs font-bold text-blue-900 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wide">
                       PricePulse AI Insight
                     </span>
-                    <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                       Demo Data Preview
                     </span>
                   </div>
-                  <h4 className="text-lg font-bold text-slate-900">{currentScenario.item}</h4>
+                  <h4 className="text-lg font-bold text-slate-900 dark:text-white">{currentScenario.item}</h4>
                 </div>
 
                 {/* Scenario switcher buttons */}
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-center">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl self-start sm:self-center">
                   <button
                     onClick={() => setSelectedDemoProduct('phone')}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                       selectedDemoProduct === 'phone'
-                        ? 'bg-white text-blue-600 shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     iPhone 16 Pro
@@ -175,8 +175,8 @@ export default function AiSection({ currency = 'INR' }) {
                     onClick={() => setSelectedDemoProduct('laptop')}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                       selectedDemoProduct === 'laptop'
-                        ? 'bg-white text-blue-600 shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     MacBook Pro
@@ -185,8 +185,8 @@ export default function AiSection({ currency = 'INR' }) {
                     onClick={() => setSelectedDemoProduct('audio')}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                       selectedDemoProduct === 'audio'
-                        ? 'bg-white text-blue-600 shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     Sony XM5
@@ -195,9 +195,9 @@ export default function AiSection({ currency = 'INR' }) {
               </div>
 
               {/* Recommendation Callout */}
-              <div className="my-5 p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="my-5 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-slate-500">Algorithmic Signal</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Algorithmic Signal</span>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${
                     currentScenario.recommendation === 'BUY NOW'
                       ? 'badge-buy'
@@ -209,23 +209,23 @@ export default function AiSection({ currency = 'INR' }) {
                   </span>
                 </div>
 
-                <p className="text-sm font-semibold text-slate-900 mb-1">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
                   {currentScenario.insightHeadline}
                 </p>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {currentScenario.insightText}
                 </p>
               </div>
 
               {/* Key Supporting Evidence List */}
               <div className="mb-5">
-                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                   Supporting Evidence & Market Data
                 </h5>
                 <ul className="space-y-2">
                   {currentScenario.supportingEvidence.map((evidence, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
+                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                       <span>{evidence}</span>
                     </li>
                   ))}
@@ -233,18 +233,18 @@ export default function AiSection({ currency = 'INR' }) {
               </div>
 
               {/* Metric Breakdown Tiles */}
-              <div className="grid grid-cols-3 gap-2.5 pt-4 border-t border-slate-100 text-center">
-                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-500 block">Current Price</span>
-                  <span className="text-sm font-bold text-slate-900">{currentScenario.currentPrice}</span>
+              <div className="grid grid-cols-3 gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Current Price</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">{currentScenario.currentPrice}</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-500 block">Recent Average</span>
-                  <span className="text-sm font-bold text-slate-900">{currentScenario.recentAverage}</span>
+                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Recent Average</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">{currentScenario.recentAverage}</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-500 block">AI Buy Score</span>
-                  <span className="text-sm font-bold text-blue-600">{currentScenario.aiScore}/100</span>
+                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">AI Buy Score</span>
+                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{currentScenario.aiScore}/100</span>
                 </div>
               </div>
 

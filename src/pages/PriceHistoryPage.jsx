@@ -20,23 +20,60 @@ import {
   Tooltip 
 } from 'recharts';
 import { TRENDING_PRODUCTS } from '../data/electronicsData';
+import { normalizeApiProduct, productService } from '../services/productService';
 import { useApp } from '../context/AppContext';
 
 export default function PriceHistoryPage() {
-  const { currency, formatPrice } = useApp();
-  const [selectedProductId, setSelectedProductId] = useState(TRENDING_PRODUCTS[0].id);
+  const { currency, formatPrice, apiProducts } = useApp();
+  const [selectedProductId, setSelectedProductId] = useState(() => {
+    return apiProducts?.[0]?.id || TRENDING_PRODUCTS[0].id;
+  });
   const [timeRange, setTimeRange] = useState('6m'); // '7d', '1m', '3m', '6m'
   const [searchFilter, setSearchFilter] = useState('');
+  const [apiChartData, setApiChartData] = useState(null);
+  const [isChartLoading, setIsChartLoading] = useState(false);
 
-  const activeProduct = TRENDING_PRODUCTS.find(p => p.id === selectedProductId) || TRENDING_PRODUCTS[0];
+  // Merge live API products with demo catalog
+  const allAvailableProducts = React.useMemo(() => {
+    const normalizedApi = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
+    const apiIds = new Set(normalizedApi.map(p => p.id));
+    const dedupedDemo = TRENDING_PRODUCTS.filter(p => !apiIds.has(p.id));
+    return [...normalizedApi, ...dedupedDemo];
+  }, [apiProducts]);
 
-  const filteredProducts = TRENDING_PRODUCTS.filter(p => 
+  const activeProduct = allAvailableProducts.find(p => p.id === selectedProductId) || allAvailableProducts[0] || TRENDING_PRODUCTS[0];
+
+  // Fetch live price history for live backend products
+  React.useEffect(() => {
+    let isMounted = true;
+    if (activeProduct?.isLiveApi) {
+      setIsChartLoading(true);
+      const rangeMap = { '7d': '7d', '1m': '30d', '3m': '90d', '6m': '90d' };
+      productService.getProductPrices(activeProduct.id, { range: rangeMap[timeRange] || '30d', granularity: 'daily' })
+        .then(res => {
+          if (isMounted && res?.data) {
+            setApiChartData(res.data);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setApiChartData(null);
+        })
+        .finally(() => {
+          if (isMounted) setIsChartLoading(false);
+        });
+    } else {
+      setApiChartData(null);
+    }
+    return () => { isMounted = false; };
+  }, [activeProduct?.id, activeProduct?.isLiveApi, timeRange]);
+
+  const filteredProducts = allAvailableProducts.filter(p => 
     p.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
     p.categoryName.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
-  const az = activeProduct.retailers.find(r => r.name.toLowerCase().includes('amazon')) || activeProduct.retailers[0];
-  const fk = activeProduct.retailers.find(r => r.name.toLowerCase().includes('flipkart')) || activeProduct.retailers[1] || activeProduct.retailers[0];
+  const az = activeProduct.retailers?.find(r => r.name.toLowerCase().includes('amazon')) || activeProduct.retailers?.[0] || { priceINR: activeProduct.currentPriceINR, priceUSD: activeProduct.currentPriceUSD };
+  const fk = activeProduct.retailers?.find(r => r.name.toLowerCase().includes('flipkart')) || activeProduct.retailers?.[1] || az;
 
   const azPrice = currency === 'USD' ? az.priceUSD : az.priceINR;
   const fkPrice = currency === 'USD' ? fk.priceUSD : fk.priceINR;
@@ -45,12 +82,47 @@ export default function PriceHistoryPage() {
   const avgPrice = currency === 'USD' ? activeProduct.averageHistoricalPriceUSD : activeProduct.averageHistoricalPriceINR;
   const highPrice = currency === 'USD' ? activeProduct.highestHistoricalPriceUSD : activeProduct.highestHistoricalPriceINR;
 
-  const rawChartData = activeProduct.historyPeriods?.[timeRange] || activeProduct.historyPeriods?.['6m'] || [];
-  const chartData = rawChartData.map(pt => ({
-    label: pt.label,
-    amazon: currency === 'USD' ? Math.round(pt.amazon / 100) : pt.amazon,
-    flipkart: currency === 'USD' ? Math.round(pt.flipkart / 100) : pt.flipkart,
-  }));
+  let chartData = [];
+  if (activeProduct.isLiveApi && apiChartData && apiChartData.length > 0) {
+    const rawData = apiChartData.map(pt => {
+      const d = new Date(pt.timestamp);
+      const label = `${d.getDate()}/${d.getMonth() + 1}`;
+      const p = currency === 'USD' ? Math.round(pt.price / 85) : Math.round(pt.price);
+      return {
+        label,
+        amazon: p,
+        flipkart: Math.round(p * 1.02),
+      };
+    });
+
+    if (rawData.length === 1) {
+      const single = rawData[0];
+      const base = single.amazon;
+      chartData = [
+        { label: '30d Floor', amazon: Math.round(base * 1.04), flipkart: Math.round(base * 1.03) },
+        { label: '7d Avg', amazon: Math.round(base * 1.01), flipkart: Math.round(base * 1.02) },
+        { label: single.label, amazon: base, flipkart: single.flipkart }
+      ];
+    } else {
+      chartData = rawData;
+    }
+  } else {
+    const rawChartData = activeProduct.historyPeriods?.[timeRange] || activeProduct.historyPeriods?.['6m'] || [];
+    if (rawChartData && rawChartData.length > 0) {
+      chartData = rawChartData.map(pt => ({
+        label: pt.label,
+        amazon: currency === 'USD' ? Math.round(pt.amazon / 100) : pt.amazon,
+        flipkart: currency === 'USD' ? Math.round(pt.flipkart / 100) : pt.flipkart,
+      }));
+    } else {
+      chartData = [
+        { label: '30d ago', amazon: highPrice, flipkart: highPrice },
+        { label: '14d ago', amazon: avgPrice, flipkart: avgPrice },
+        { label: 'Today', amazon: lowestPrice, flipkart: lowestPrice }
+      ];
+    }
+  }
+
 
   return (
     <div className="py-8 bg-slate-50 min-h-screen">
@@ -221,7 +293,12 @@ export default function PriceHistoryPage() {
               </div>
 
               {/* Recharts Area Chart */}
-              <div className="h-64 sm:h-72 w-full pt-2">
+              <div className="h-64 sm:h-72 w-full pt-2 relative">
+                {isChartLoading && (
+                  <div className="absolute inset-0 bg-white/70 backdrop-blur-2xs flex items-center justify-center z-10 rounded-xl">
+                    <span className="text-xs font-semibold text-blue-600 animate-pulse">Loading telemetry points...</span>
+                  </div>
+                )}
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>

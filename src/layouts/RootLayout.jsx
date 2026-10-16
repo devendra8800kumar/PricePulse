@@ -24,8 +24,8 @@ export default function RootLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col selection:bg-blue-500/20 selection:text-blue-900 font-sans">
-      {/* 1. Global Light Navigation Bar */}
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 flex flex-col selection:bg-blue-500/20 selection:text-blue-900 font-sans transition-colors duration-200">
+      {/* 1. Global Navigation Bar */}
       <Navbar />
 
       {/* 2. Main Page Content (Route-driven via Outlet) */}

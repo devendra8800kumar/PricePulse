@@ -29,7 +29,7 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
   return (
     <section 
       id="home" 
-      className="relative pt-6 sm:pt-10 pb-10 overflow-hidden soft-mesh-bg border-b border-slate-200/80"
+      className="relative pt-6 sm:pt-10 pb-10 overflow-hidden soft-mesh-bg border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#0b0f19] transition-colors duration-200"
     >
       {/* Subtle light ambient radial glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[340px] bg-gradient-to-b from-blue-400/10 via-cyan-400/5 to-transparent blur-3xl pointer-events-none" />
@@ -45,14 +45,14 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
           transition={{ duration: 0.35 }}
           className="flex justify-center mb-3 sm:mb-4"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-sm border border-slate-200/90 shadow-2xs">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/90 dark:border-slate-700 shadow-2xs">
             <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-            <span className="text-xs font-semibold text-slate-700">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Live Amazon vs Flipkart Price Intelligence
             </span>
-            <span className="text-slate-300">•</span>
-            <span className="text-xs text-blue-600 font-semibold flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-slate-300 dark:text-slate-600">•</span>
+            <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               AI Buy Timing Engine
             </span>
           </div>
@@ -64,7 +64,7 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.05 }}
-            className="text-[clamp(2.15rem,4.6vw,3.65rem)] font-black tracking-tight text-slate-900 mb-2.5 leading-[1.12]"
+            className="text-[clamp(2.15rem,4.6vw,3.65rem)] font-black tracking-tight text-slate-900 dark:text-white mb-2.5 leading-[1.12]"
           >
             Buy Smarter.{' '}
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent block sm:inline">
@@ -76,7 +76,7 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.12 }}
-            className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed max-w-2xl mx-auto mb-5"
+            className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-normal leading-relaxed max-w-2xl mx-auto mb-5"
           >
             Real-time cross-store price monitoring, historical price floors, and predictive AI timing so you never overpay for tech.
           </motion.p>
@@ -101,7 +101,7 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
                   key={tag}
                   type="button"
                   onClick={() => onOpenSearch(tag)}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/90 hover:bg-blue-50/70 border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-600 transition-all duration-150 cursor-pointer text-xs font-medium shadow-2xs active:scale-95"
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-800/60 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-150 cursor-pointer text-xs font-medium shadow-2xs active:scale-95"
                 >
                   {tag}
                 </button>
@@ -142,7 +142,7 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 mt-4 text-xs text-slate-500 font-medium"
+            className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 mt-4 text-xs text-slate-500 dark:text-slate-400 font-medium"
           >
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -166,27 +166,27 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.32 }}
-          className="max-w-4xl mx-auto rounded-3xl bg-white border border-slate-200/90 p-4 sm:p-6 shadow-md shadow-slate-200/50 hover:shadow-lg transition-all"
+          className="max-w-4xl mx-auto rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-6 shadow-md shadow-slate-200/50 dark:shadow-slate-900/80 hover:shadow-lg transition-all"
         >
           {/* Card Header & Segmented Tab Switcher with Sliding Active Indicator */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Live Price Battle Preview
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
                   Verified Stores
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
+              <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
                 {currentDataset.name}
               </h3>
             </div>
 
             {/* Segmented Control Switcher with Framer Motion Sliding Pill */}
-            <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl relative border border-slate-200/60 self-start sm:self-auto">
+            <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800 p-1 rounded-xl relative border border-slate-200/60 dark:border-slate-700 self-start sm:self-auto">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -194,13 +194,13 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer ${
-                      isActive ? 'text-blue-600 font-bold' : 'text-slate-600 hover:text-slate-900'
+                      isActive ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="activeHeroTab"
-                        className="absolute inset-0 bg-white rounded-lg shadow-2xs border border-slate-200/60"
+                        className="absolute inset-0 bg-white dark:bg-slate-700 rounded-lg shadow-2xs border border-slate-200/60 dark:border-slate-600"
                         transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                       />
                     )}
@@ -227,9 +227,9 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
           </div>
 
           {/* Graph Footer Status */}
-          <div className="flex flex-wrap items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500">
             <span>Price trends derived from high-frequency store scraping</span>
-            <span className="text-blue-600 font-semibold cursor-pointer hover:underline" onClick={onCompareClick}>
+            <span className="text-blue-600 dark:text-blue-400 font-semibold cursor-pointer hover:underline" onClick={onCompareClick}>
               Launch Full Side-by-Side Comparison →
             </span>
           </div>

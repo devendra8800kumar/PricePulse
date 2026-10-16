@@ -77,14 +77,21 @@ export default function DashboardPage() {
     return currency === 'USD' ? p.currentPriceUSD : p.currentPriceINR;
   };
 
+  // Normalized live API products
+  const normalizedApiProducts = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
+
+  const resolveProduct = (id) => {
+    return getProductById(id) || normalizedApiProducts.find(p => p.id === id) || null;
+  };
+
   // Watchlisted products
   const watchlistedProducts = watchlist
-    .map(id => getProductById(id))
+    .map(resolveProduct)
     .filter(Boolean);
 
   // Recently viewed products
   const recentProducts = recentlyViewed
-    .map(id => getProductById(id))
+    .map(resolveProduct)
     .filter(Boolean);
 
   // Top AI recommendations (Buy Score >= 80)
@@ -97,9 +104,6 @@ export default function DashboardPage() {
     const diff = currency === 'USD' ? (p.priceDifferenceUSD || 15) : (p.priceDifferenceINR || 1200);
     return acc + diff;
   }, 0);
-
-  // Normalized live API products
-  const normalizedApiProducts = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">

@@ -15,7 +15,7 @@ import { useApp } from '../context/AppContext';
 import Button from './ui/Button';
 
 export default function TrackProductModal() {
-  const { isTrackModalOpen, closeTrackModal, trackProduct, formatPrice, currency } = useApp();
+  const { isTrackModalOpen, closeTrackModal, trackProduct, formatPrice, currency, user, login, showToast } = useApp();
   const navigate = useNavigate();
 
   const [url, setUrl] = useState('');
@@ -54,6 +54,10 @@ export default function TrackProductModal() {
     setIsLoading(true);
 
     try {
+      if (!user?.isLoggedIn) {
+        await login('demo@pricepulse.com', 'Password123!');
+      }
+
       const res = await trackProduct({
         url: url.trim(),
         target_price: targetPrice ? Number(targetPrice) : null,
@@ -176,6 +180,17 @@ export default function TrackProductModal() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!user?.isLoggedIn && (
+              <div className="p-3 bg-blue-50/80 rounded-2xl border border-blue-200 text-xs text-blue-900 flex items-center justify-between gap-3">
+                <span className="text-[11px] leading-tight">
+                  <strong className="block text-blue-800">Quick Guest Ingestion</strong>
+                  Submissions are authenticated to save your watchlist and alerts.
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-200 text-blue-900 shrink-0">
+                  Instant Access
+                </span>
+              </div>
+            )}
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">
                 E-Commerce Product Link

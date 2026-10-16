@@ -247,6 +247,37 @@ export default function LoginPage() {
               >
                 Sign In to PricePulse
               </Button>
+
+              <div className="relative my-3 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <span className="relative bg-white px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Or Fast Demo Access
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  setEmail('demo@pricepulse.com');
+                  setPassword('Password123!');
+                  setIsLoading(true);
+                  try {
+                    await login('demo@pricepulse.com', 'Password123!', true);
+                    navigate(redirectPath, { replace: true });
+                  } catch (err) {
+                    setError(err.message || 'Demo login failed');
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full h-10 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 border border-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+              >
+                <Sparkles className="w-4 h-4 text-blue-600" />
+                <span>1-Click Demo Sign In (demo@pricepulse.com)</span>
+              </button>
             </form>
           </div>
 

@@ -13,33 +13,42 @@ import {
   X
 } from 'lucide-react';
 import { TRENDING_PRODUCTS } from '../data/electronicsData';
+import { normalizeApiProduct } from '../services/productService';
 import { useApp } from '../context/AppContext';
 
 export default function ComparePage() {
-  const { compareList, removeFromCompare, toggleCompare, clearCompare, formatPrice, currency } = useApp();
+  const { compareList, removeFromCompare, toggleCompare, clearCompare, formatPrice, currency, apiProducts } = useApp();
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
+  // Merge live API products with demo catalog
+  const allAvailableProducts = React.useMemo(() => {
+    const normalizedApi = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
+    const apiIds = new Set(normalizedApi.map(p => p.id));
+    const dedupedDemo = TRENDING_PRODUCTS.filter(p => !apiIds.has(p.id));
+    return [...normalizedApi, ...dedupedDemo];
+  }, [apiProducts]);
+
   // Selected products list
-  const selectedProducts = TRENDING_PRODUCTS.filter(p => compareList.includes(p.id));
+  const selectedProducts = allAvailableProducts.filter(p => compareList.includes(p.id));
 
   // Available products not yet added
-  const availableToAdd = TRENDING_PRODUCTS.filter(p => !compareList.includes(p.id));
+  const availableToAdd = allAvailableProducts.filter(p => !compareList.includes(p.id));
 
   return (
-    <div className="py-8 bg-slate-50 min-h-screen">
+    <div className="py-8 bg-slate-50 dark:bg-[#0B0F19] min-h-screen transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold mb-2">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-2">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Side-by-Side Matrix</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Compare <span className="text-blue-600">Electronics</span>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Compare <span className="text-blue-600 dark:text-blue-400">Electronics</span>
             </h1>
-            <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-xl">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1 max-w-xl">
               Compare up to 3 electronics devices head-to-head across Amazon India and Flipkart base pricing, historical lows, and AI buy signals.
             </p>
           </div>
@@ -58,7 +67,7 @@ export default function ComparePage() {
             {selectedProducts.length > 0 && (
               <button
                 onClick={clearCompare}
-                className="px-3 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 hover:text-rose-600 transition-colors cursor-pointer"
+                className="px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
               >
                 Clear All
               </button>
@@ -73,16 +82,16 @@ export default function ComparePage() {
             onClick={() => setIsSelectorOpen(false)}
           >
             <div 
-              className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 max-w-md w-full max-h-[80vh] overflow-y-auto"
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-5 max-w-md w-full max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <h3 className="text-sm font-bold text-slate-900">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                   Select a Product to Compare
                 </h3>
                 <button
                   onClick={() => setIsSelectorOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -96,17 +105,17 @@ export default function ComparePage() {
                       toggleCompare(p.id);
                       setIsSelectorOpen(false);
                     }}
-                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 border border-slate-200/60 hover:border-blue-300 cursor-pointer transition-colors"
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-600/50 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <img
                         src={p.image}
                         alt={p.name}
-                        className="w-10 h-10 rounded-lg object-cover bg-slate-50 border border-slate-200"
+                        className="w-10 h-10 rounded-lg object-cover bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                       />
                       <div>
-                        <p className="text-xs font-bold text-slate-900 line-clamp-1">{p.name}</p>
-                        <p className="text-[11px] text-slate-500">{p.categoryName} • {formatPrice(currency === 'USD' ? p.currentPriceUSD : p.currentPriceINR)}</p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{p.name}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{p.categoryName} • {formatPrice(currency === 'USD' ? p.currentPriceUSD : p.currentPriceINR)}</p>
                       </div>
                     </div>
                     <Plus className="w-4 h-4 text-blue-600 shrink-0" />
@@ -119,10 +128,10 @@ export default function ComparePage() {
 
         {/* Empty State */}
         {selectedProducts.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto my-12">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center max-w-md mx-auto my-12">
             <SlidersHorizontal className="w-12 h-12 text-blue-600/60 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-slate-900 mb-1">No products selected for comparison</h3>
-            <p className="text-xs text-slate-500 mb-6">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">No products selected for comparison</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
               Select 2 or 3 gadgets to view side-by-side specs, price trends, and platform differences.
             </p>
             <div className="flex flex-col gap-2">
@@ -137,7 +146,7 @@ export default function ComparePage() {
               </button>
               <Link
                 to="/products"
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs"
               >
                 Browse All Electronics
               </Link>
@@ -168,18 +177,18 @@ export default function ComparePage() {
                 return (
                   <div
                     key={product.id}
-                    className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs flex flex-col justify-between"
+                    className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs dark:shadow-md flex flex-col justify-between transition-colors"
                   >
                     <div>
                       {/* Card Header & Remove Button */}
-                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-                        <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                           {product.categoryName}
                         </span>
 
                         <button
                           onClick={() => removeFromCompare(product.id)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                           title="Remove from comparison"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -190,47 +199,47 @@ export default function ComparePage() {
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-full h-44 rounded-xl object-cover bg-slate-50 border border-slate-200 mb-3"
+                        className="w-full h-44 rounded-xl object-cover bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mb-3"
                       />
 
                       <Link
                         to={`/products/${product.slug || product.id}`}
-                        className="text-base font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1 mb-1 block"
+                        className="text-base font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-1 mb-1 block"
                       >
                         {product.name}
                       </Link>
 
                       <div className="flex items-center gap-1 text-xs text-amber-500 mb-3">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="font-bold text-slate-800">{product.rating}</span>
-                        <span className="text-slate-400">({product.reviewsCount})</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{product.rating || 4.5}</span>
+                        <span className="text-slate-400 dark:text-slate-500">({product.reviewsCount || product.reviewCount || 120})</span>
                       </div>
 
                       {/* Current Lowest Price */}
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 mb-4">
-                        <span className="text-[10px] text-slate-500 block">Lowest Current Price:</span>
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 mb-4">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Lowest Current Price:</span>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-black text-slate-900">
+                          <span className="text-2xl font-black text-slate-900 dark:text-white">
                             {formatPrice(lowestPrice)}
                           </span>
                         </div>
-                        <span className="text-xs font-bold text-emerald-700 block mt-0.5">
-                          Cheapest on {product.bestStore}
+                        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mt-0.5">
+                          Cheapest on {product.bestStore || (isAzCheaper ? 'Amazon' : (isFkCheaper ? 'Flipkart' : (product.platform?.toUpperCase() || 'Verified Store')))}
                         </span>
                       </div>
 
                       {/* Store Breakdown */}
-                      <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-2 mb-4 text-xs font-mono">
+                      <div className="p-3 rounded-xl bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-2 mb-4 text-xs font-mono">
                         <div className="flex justify-between items-center">
-                          <span className="text-amber-800 font-bold">Amazon:</span>
-                          <span className={`font-bold ${isAzCheaper ? 'text-emerald-700' : 'text-slate-800'}`}>
+                          <span className="text-amber-800 dark:text-amber-400 font-bold">Amazon:</span>
+                          <span className={`font-bold ${isAzCheaper ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`}>
                             {formatPrice(azPrice)}
                             {isAzCheaper && ' (Lowest)'}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-blue-800 font-bold">Flipkart:</span>
-                          <span className={`font-bold ${isFkCheaper ? 'text-emerald-700' : 'text-slate-800'}`}>
+                          <span className="text-blue-800 dark:text-blue-400 font-bold">Flipkart:</span>
+                          <span className={`font-bold ${isFkCheaper ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`}>
                             {formatPrice(fkPrice)}
                             {isFkCheaper && ' (Lowest)'}
                           </span>
@@ -238,30 +247,32 @@ export default function ComparePage() {
                       </div>
 
                       {/* Historical Benchmarks */}
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs text-slate-600 mb-4">
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs text-slate-600 dark:text-slate-300 mb-4">
                         <div className="flex justify-between">
                           <span>Historical Low:</span>
-                          <strong className="text-emerald-700">{formatPrice(floorPrice)}</strong>
+                          <strong className="text-emerald-700 dark:text-emerald-400">{formatPrice(floorPrice)}</strong>
                         </div>
                         <div className="flex justify-between">
                           <span>Historical Average:</span>
-                          <strong className="text-slate-800">{formatPrice(avgPrice)}</strong>
+                          <strong className="text-slate-800 dark:text-slate-200">{formatPrice(avgPrice)}</strong>
                         </div>
                         <div className="flex justify-between">
                           <span>Price Trend:</span>
-                          <span className="font-semibold text-slate-800">{product.priceTrendLabel}</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">{product.priceTrendLabel || (product.isLiveApi ? 'Live Telemetry Active' : 'Monitored Trend')}</span>
                         </div>
                       </div>
 
                       {/* AI Buy Score & Signal */}
-                      <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-200 mb-4">
-                        <div className="flex justify-between items-center mb-1 text-xs">
-                          <span className="font-semibold text-slate-600">Buy Score:</span>
-                          <span className="font-bold text-blue-700">{product.aiScore}/100</span>
+                      <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/90 dark:border-blue-800/60 mb-4 shadow-2xs">
+                        <div className="flex justify-between items-center mb-1.5 text-xs">
+                          <span className="font-semibold text-slate-600 dark:text-slate-300">Buy Score:</span>
+                          <span className="font-bold text-blue-700 dark:text-blue-400 bg-white/80 dark:bg-blue-900/40 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/50">
+                            {product.aiScore}/100
+                          </span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
-                          <span className="font-semibold text-slate-600">AI Signal:</span>
-                          <span className={`font-bold px-2 py-0.2 rounded text-[10px] ${
+                          <span className="font-semibold text-slate-600 dark:text-slate-300">AI Signal:</span>
+                          <span className={`font-bold px-2.5 py-0.5 rounded-md text-[10px] ${
                             product.recommendation === 'BUY NOW'
                               ? 'badge-buy'
                               : product.recommendation === 'WAIT'
@@ -275,10 +286,10 @@ export default function ComparePage() {
 
                       {/* Specifications Summary */}
                       <div className="mb-4">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
                           Specifications
                         </span>
-                        <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
                           {product.specs}
                         </p>
                       </div>

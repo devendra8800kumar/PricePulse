@@ -29,6 +29,38 @@ export function AppProvider({ children }) {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
+  // 0. Theme ('light' | 'dark')
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pricepulse_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+    } catch {
+      // ignore
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    try {
+      const root = document.documentElement;
+      if (theme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+      localStorage.setItem('pricepulse_theme', theme);
+    } catch {
+      // ignore
+    }
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
   // 1. Currency ('INR' | 'USD')
   const [currency, setCurrency] = useState(() => {
     return localStorage.getItem('pricepulse_currency') || 'INR';
@@ -593,6 +625,12 @@ export function AppProvider({ children }) {
   const closeTrackModal = useCallback(() => setIsTrackModalOpen(false), []);
 
   const value = {
+    // Theme
+    theme,
+    setTheme,
+    toggleTheme,
+    isDarkMode: theme === 'dark',
+    // Currency
     currency,
     toggleCurrency,
     formatPrice,
