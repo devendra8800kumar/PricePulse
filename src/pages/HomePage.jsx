@@ -46,6 +46,9 @@ export default function HomePage() {
         onOpenSearch={(query) => {
           navigate(query ? `/products?q=${encodeURIComponent(query)}` : '/products');
         }}
+        onSelectProduct={(product) => {
+          navigate(`/products/${product.slug || product.id}`);
+        }}
         currency={currency}
       />
 

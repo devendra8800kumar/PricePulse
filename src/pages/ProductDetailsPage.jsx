@@ -122,7 +122,7 @@ export default function ProductDetailsPage() {
 
   if (isLoading && !product) {
     return (
-      <div className="py-16 bg-slate-50 min-h-screen">
+      <div className="py-16 bg-slate-50 dark:bg-[#0b0f19] min-h-screen transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-6">
             <Link to="/" className="hover:text-blue-600">Home</Link>
@@ -131,10 +131,10 @@ export default function ProductDetailsPage() {
             <ChevronRight className="w-3.5 h-3.5" />
             <span>Loading product telemetry...</span>
           </div>
-          <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/90 shadow-2xs max-w-xl mx-auto">
-            <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-slate-900 mb-1">Retrieving Product Telemetry</h2>
-            <p className="text-xs text-slate-500">
+          <div className="p-12 text-center bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-2xs max-w-xl mx-auto">
+            <RefreshCw className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin mx-auto mb-3" />
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">Retrieving Product Telemetry</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Querying database price records and machine-learning recommendation models...
             </p>
           </div>
@@ -146,26 +146,26 @@ export default function ProductDetailsPage() {
   if (!product) {
     const isUnauthenticated = fetchError && (fetchError.includes('Not authenticated') || fetchError.includes('401'));
     return (
-      <div className="py-16 bg-slate-50 min-h-screen">
+      <div className="py-16 bg-slate-50 dark:bg-[#0b0f19] min-h-screen transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-6">
-            <Link to="/" className="hover:text-blue-600">Home</Link>
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-6">
+            <Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400">Home</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <Link to="/products" className="hover:text-blue-600">Products</Link>
+            <Link to="/products" className="hover:text-blue-600 dark:hover:text-blue-400">Products</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="font-mono text-slate-700">{id?.slice(0, 8)}...</span>
+            <span className="font-mono text-slate-700 dark:text-slate-300">{id?.slice(0, 8)}...</span>
           </div>
 
-          <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-lg mx-auto shadow-sm">
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-7 h-7 text-blue-600" />
+          <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 p-8 sm:p-12 text-center max-w-lg mx-auto shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-7 h-7 text-blue-600 dark:text-blue-400" />
             </div>
 
             {isUnauthenticated ? (
               <>
-                <h2 className="text-xl font-bold text-slate-900 mb-2">Sign In to View Tracked Item</h2>
-                <p className="text-xs text-slate-600 mb-6 leading-relaxed">
-                  Product <span className="font-mono font-bold text-slate-800">{id}</span> is actively tracked via our cloud scraper. Sign in with your PricePulse account to access real-time price history, AI timing recommendations, and threshold alerts.
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Sign In to View Tracked Item</h2>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                  Product <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{id}</span> is actively tracked via our cloud scraper. Sign in with your PricePulse account to access real-time price history, AI timing recommendations, and threshold alerts.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
@@ -305,7 +305,7 @@ export default function ProductDetailsPage() {
   };
 
   return (
-    <div className="py-8 bg-slate-50 min-h-screen">
+    <div className="py-8 bg-slate-50 dark:bg-[#0b0f19] min-h-screen transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumb Navigation */}

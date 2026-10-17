@@ -253,9 +253,8 @@ export function AppProvider({ children }) {
     };
   };
 
-  // Fetch live products from /api/v1/products
+  // Fetch live products from /api/v1/products (public catalog)
   const fetchApiProducts = useCallback(async (params = {}) => {
-    if (!tokenStorage.getAccessToken()) return null;
     setIsProductsLoading(true);
     try {
       const res = await productService.getProducts(params);
@@ -339,6 +338,9 @@ export function AppProvider({ children }) {
     let isMounted = true;
     async function initAuth() {
       checkSystemHealth();
+      // Always load the live product catalog regardless of authentication
+      fetchApiProducts();
+      
       const token = tokenStorage.getAccessToken();
       if (token) {
         try {
@@ -349,9 +351,8 @@ export function AppProvider({ children }) {
             const formatted = mapBackendUser(profile, savedName);
             setUser(formatted);
             localStorage.setItem('pricepulse_auth_user', JSON.stringify(formatted));
-            // Fetch stats, products, subscriptions, alerts in parallel
+            // Fetch stats, subscriptions, alerts for this authenticated user
             refreshUserStats();
-            fetchApiProducts();
             fetchSubscriptions();
             fetchAlerts();
           }
@@ -373,9 +374,9 @@ export function AppProvider({ children }) {
     const handleExpired = () => {
       setUser(null);
       setUserStats({ tracked_count: 0, alerts_fired: 0, active_subscriptions: 0, savings_estimate: 0 });
-      setApiProducts([]);
       setSubscriptions([]);
       setApiAlerts([]);
+      fetchApiProducts();
       localStorage.removeItem('pricepulse_auth_user');
       showToast('Your session has expired. Please sign in again.', 'warning');
     };
@@ -444,9 +445,9 @@ export function AppProvider({ children }) {
     await authService.logout();
     setUser(null);
     setUserStats({ tracked_count: 0, alerts_fired: 0, active_subscriptions: 0, savings_estimate: 0 });
-    setApiProducts([]);
     setSubscriptions([]);
     setApiAlerts([]);
+    fetchApiProducts();
     localStorage.removeItem('pricepulse_auth_user');
     showToast('You have been logged out safely', 'info');
   };

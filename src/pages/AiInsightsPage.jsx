@@ -142,7 +142,7 @@ export default function AiInsightsPage() {
   ];
 
   return (
-    <div className="py-8 bg-slate-50 min-h-screen">
+    <div className="py-8 bg-slate-50 dark:bg-[#0b0f19] min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
@@ -152,10 +152,10 @@ export default function AiInsightsPage() {
               <Sparkles className="w-3.5 h-3.5 text-blue-600" />
               <span>Grounded RAG Chatbot & Real-Time Recommendation Engine</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
               AI Price <span className="text-blue-600">Intelligence</span>
             </h1>
-            <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-2xl">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
               "Don't just find the price. Find the right time to buy." Powered by historical telemetry, dual-platform scrapers, and grounded LLM reasoning.
             </p>
           </div>
@@ -168,13 +168,13 @@ export default function AiInsightsPage() {
         </div>
 
         {/* Main Tab Navigation */}
-        <div className="flex items-center gap-2 mb-6 pb-2 border-b border-slate-200 overflow-x-auto">
+        <div className="flex items-center gap-2 mb-6 pb-2 border-b border-slate-200 dark:border-slate-700/60 overflow-x-auto">
           <button
             onClick={() => setActiveMainTab('chat')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
               activeMainTab === 'chat'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
             }`}
           >
             <MessageSquare className="w-4 h-4" />
@@ -195,7 +195,7 @@ export default function AiInsightsPage() {
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
               activeMainTab === 'inspector'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
             }`}
           >
             <BrainCircuit className="w-4 h-4" />
@@ -207,7 +207,7 @@ export default function AiInsightsPage() {
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
               activeMainTab === 'signals'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
             }`}
           >
             <BarChart2 className="w-4 h-4" />
@@ -217,9 +217,9 @@ export default function AiInsightsPage() {
 
         {/* TAB 1: Grounded RAG Chat Interface (/api/v1/chat, /api/v1/chat/history) */}
         {activeMainTab === 'chat' && (
-          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden flex flex-col h-[650px]">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-700/60 rounded-2xl shadow-2xs overflow-hidden flex flex-col h-[650px]">
             {/* Chat Header */}
-            <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-[#0e1525] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
                   <Bot className="w-4.5 h-4.5" />
@@ -250,7 +250,7 @@ export default function AiInsightsPage() {
             </div>
 
             {/* Chat Transcript Area */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#FAFCFE]">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/60 dark:bg-[#0b0f19]">
               {chatMessages.length === 0 ? (
                 <div className="max-w-lg mx-auto py-8 text-center">
                   <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mx-auto mb-3 shadow-2xs">
@@ -271,7 +271,7 @@ export default function AiInsightsPage() {
                       <button
                         key={idx}
                         onClick={() => handlePromptChipClick(prompt)}
-                        className="w-full p-2.5 rounded-xl bg-white hover:bg-blue-50/70 border border-slate-200 hover:border-blue-300 text-slate-700 text-xs font-medium transition-all text-left flex items-center justify-between group cursor-pointer shadow-2xs"
+                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-blue-50/70 dark:hover:bg-blue-900/30 border border-slate-200 dark:border-slate-700 hover:border-blue-300 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all text-left flex items-center justify-between group cursor-pointer shadow-2xs"
                       >
                         <span className="line-clamp-1">{prompt}</span>
                         <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
@@ -298,7 +298,7 @@ export default function AiInsightsPage() {
                       <div className={`rounded-2xl p-4 text-xs leading-relaxed ${
                         isUser
                           ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'bg-white border border-slate-200/90 text-slate-800 shadow-2xs'
+                          : 'bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 shadow-2xs'
                       }`}>
                         <div className="whitespace-pre-wrap font-sans">{msg.content}</div>
 
@@ -345,7 +345,7 @@ export default function AiInsightsPage() {
                   <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0 animate-pulse">
                     <Bot className="w-4 h-4" />
                   </div>
-                  <div className="rounded-2xl p-3.5 bg-white border border-slate-200 text-xs text-slate-500 flex items-center gap-2 shadow-2xs">
+                  <div className="rounded-2xl p-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 shadow-2xs">
                     <div className="flex gap-1">
                       <span className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
                       <span className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -360,7 +360,7 @@ export default function AiInsightsPage() {
             </div>
 
             {/* Chat Input Bar */}
-            <div className="p-3 border-t border-slate-100 bg-white">
+            <div className="p-3 border-t border-slate-100 dark:border-slate-700/60 bg-white dark:bg-[#0e1525]">
               <form onSubmit={handleSendChat} className="flex items-center gap-2">
                 <input
                   type="text"

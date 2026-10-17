@@ -46,15 +46,13 @@ export default function ProductsPage() {
   // Pagination / Load more
   const [visibleCount, setVisibleCount] = useState(9);
 
-  // Fetch API products when platform or category changes
+  // Fetch API products when platform or category changes (for all shoppers)
   useEffect(() => {
-    if (user && user.isLoggedIn) {
-      fetchApiProducts({
-        platform: selectedPlatform !== 'all' ? selectedPlatform : null,
-        category: selectedCategory !== 'all' ? selectedCategory : null,
-      });
-    }
-  }, [selectedPlatform, selectedCategory, user, fetchApiProducts]);
+    fetchApiProducts({
+      platform: selectedPlatform !== 'all' ? selectedPlatform : null,
+      category: selectedCategory !== 'all' ? selectedCategory : null,
+    });
+  }, [selectedPlatform, selectedCategory, fetchApiProducts]);
 
   useEffect(() => {
     const cat = searchParams.get('category');
@@ -150,7 +148,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="py-8 bg-slate-50 min-h-screen">
+    <div className="py-8 bg-slate-50 dark:bg-[#0b0f19] min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Page Header */}
@@ -160,10 +158,10 @@ export default function ProductsPage() {
               <Sparkles className="w-3.5 h-3.5 text-blue-600" />
               <span>Real-Time Catalog & Live Ingestion</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
               Explore <span className="text-blue-600">Tracked Products</span>
             </h1>
-            <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-2xl">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
               Audit prices across Amazon India and Flipkart. Submit live URLs to monitor prices prospectively and evaluate buy-timing recommendations.
             </p>
           </div>
@@ -189,37 +187,35 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Live Ingestion Banner for Logged-In Shoppers */}
-        {user && user.isLoggedIn && (
-          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
-                <Layers className="w-5 h-5" />
-              </div>
-              <div className="text-xs">
-                <span className="font-extrabold text-slate-900 block text-sm">
-                  Live FastAPI Ingestion Active ({apiProducts?.length || 0} Products in System)
-                </span>
-                <span className="text-slate-600">
-                  Prospective scraping deduplicates canonical ASIN & PID keys with GBDT inference.
-                </span>
-              </div>
+        {/* Live Ingestion Banner for All Shoppers */}
+        <div className="mb-6 p-4 rounded-2xl bg-blue-600/10 dark:bg-blue-900/25 border border-blue-300/60 dark:border-blue-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
+              <Layers className="w-5 h-5" />
             </div>
-            <div className="flex items-center gap-2 self-end sm:self-center">
-              <button
-                onClick={() => fetchApiProducts({ platform: selectedPlatform !== 'all' ? selectedPlatform : null })}
-                disabled={isProductsLoading}
-                className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isProductsLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
+            <div className="text-xs">
+              <span className="font-extrabold text-slate-900 dark:text-slate-100 block text-sm">
+                Live FastAPI Ingestion Active ({apiProducts?.length || 0} Products in System)
+              </span>
+              <span className="text-slate-600 dark:text-slate-400">
+                Prospective scraping deduplicates canonical ASIN &amp; PID keys with GBDT inference.
+              </span>
             </div>
           </div>
-        )}
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            <button
+              onClick={() => fetchApiProducts({ platform: selectedPlatform !== 'all' ? selectedPlatform : null })}
+              disabled={isProductsLoading}
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isProductsLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+        </div>
 
         {/* Search, Filter & Sort Control Deck */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs mb-8 space-y-4">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs mb-8 space-y-4">
           
           {/* Top Row: Search Input + Sort Dropdown */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -230,12 +226,12 @@ export default function ProductsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by device name, canonical key, or specs..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -244,8 +240,8 @@ export default function ProductsPage() {
 
             {/* Platform Filter */}
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-500 shrink-0 hidden sm:inline">Store:</span>
-              <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-200">
+              <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0 hidden sm:inline">Store:</span>
+              <div className="flex items-center bg-slate-50 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
                 {['all', 'amazon', 'flipkart'].map((p) => (
                   <button
                     key={p}
@@ -253,7 +249,7 @@ export default function ProductsPage() {
                     className={`px-3 py-1 text-xs font-bold rounded-lg capitalize transition-colors cursor-pointer ${
                       selectedPlatform === p
                         ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                     }`}
                   >
                     {p === 'all' ? 'All Stores' : p}
@@ -264,11 +260,11 @@ export default function ProductsPage() {
 
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 shrink-0 hidden sm:inline">Sort:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0 hidden sm:inline">Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="py-2.5 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-700 font-semibold focus:outline-none focus:border-blue-500 cursor-pointer"
+                className="py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:border-blue-500 cursor-pointer"
               >
                 <option value="featured">Featured Order</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -289,7 +285,7 @@ export default function ProductsPage() {
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                   selectedCategory === cat.id
                     ? 'bg-blue-600 text-white shadow-2xs font-bold'
-                    : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+                    : 'bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700'
                 }`}
               >
                 {cat.name}
@@ -298,19 +294,19 @@ export default function ProductsPage() {
           </div>
 
           {/* Bottom Row: Additional Filters (AI Recommendation & Price Slider) */}
-          <div className="pt-3 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
             
             {/* Recommendation Filter */}
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-500">AI Signal:</span>
+              <span className="font-semibold text-slate-500 dark:text-slate-400">AI Signal:</span>
               {['all', 'BUY NOW', 'WAIT', 'GOOD DEAL'].map((signal) => (
                 <button
                   key={signal}
                   onClick={() => setRecommendationFilter(signal)}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer text-[11px] ${
                     recommendationFilter === signal
-                      ? signal === 'BUY NOW' ? 'bg-emerald-600 text-white' : signal === 'WAIT' ? 'bg-amber-600 text-white' : signal === 'GOOD DEAL' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? signal === 'BUY NOW' ? 'bg-emerald-600 text-white' : signal === 'WAIT' ? 'bg-amber-600 text-white' : signal === 'GOOD DEAL' ? 'bg-blue-600 text-white' : 'bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
                   {signal === 'all' ? 'All Signals' : signal}
@@ -320,8 +316,8 @@ export default function ProductsPage() {
 
             {/* Price Cap Filter */}
             <div className="flex items-center gap-3">
-              <span className="text-slate-500 font-semibold">
-                Max Price: <strong className="text-slate-900">{formatPrice(maxPrice)}</strong>
+              <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                Max Price: <strong className="text-slate-900 dark:text-slate-100">{formatPrice(maxPrice)}</strong>
               </span>
               <input
                 type="range"
@@ -345,11 +341,11 @@ export default function ProductsPage() {
         </div>
 
         {/* Results Counter and Active Filter Tags */}
-        <div className="flex items-center justify-between mb-6 text-xs text-slate-500">
+        <div className="flex items-center justify-between mb-6 text-xs text-slate-500 dark:text-slate-400">
           <div>
-            Showing <strong className="text-slate-900">{displayedProducts.length}</strong> of{' '}
-            <strong className="text-slate-900">{filteredProducts.length}</strong> electronics
-            {isProductsLoading && <span className="ml-2 text-blue-600 animate-pulse font-medium">Syncing API...</span>}
+            Showing <strong className="text-slate-900 dark:text-slate-100">{displayedProducts.length}</strong> of{' '}
+            <strong className="text-slate-900 dark:text-slate-100">{filteredProducts.length}</strong> electronics
+            {isProductsLoading && <span className="ml-2 text-blue-600 dark:text-blue-400 animate-pulse font-medium">Syncing API...</span>}
           </div>
 
           <div className="flex items-center gap-2">
@@ -367,10 +363,10 @@ export default function ProductsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto">
+          <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-700/60 p-12 text-center max-w-md mx-auto">
             <Filter className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900 mb-1">No products match your filters</h3>
-            <p className="text-xs text-slate-500 mb-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1">No products match your filters</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
               Try adjusting your store, price range, search query, or category selection.
             </p>
             <button
