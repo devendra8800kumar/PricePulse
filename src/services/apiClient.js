@@ -129,6 +129,14 @@ export async function apiRequest(endpoint, options = {}) {
  * Parse JSON safely and extract FastAPI error details
  */
 export async function handleApiResponse(response) {
+  // Guard: apiRequest can return undefined when a 401 refresh cycle fails
+  // and the session_expired event is dispatched without returning a new Response.
+  if (!response) {
+    const err = new Error('Session expired. Please sign in again.');
+    err.status = 401;
+    throw err;
+  }
+
   if (response.status === 204) {
     return null;
   }

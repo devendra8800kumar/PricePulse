@@ -453,8 +453,11 @@ export function AppProvider({ children }) {
 
   // Update profile via /api/v1/users/me
   const updateUserProfile = async (updates) => {
-    const updated = await userService.updateMe(updates);
-    const updatedUser = mapBackendUser(updated, user?.name);
+    // `name` is a local-only display name — strip it before sending to backend
+    const { name: displayName, ...apiPayload } = updates;
+    const updated = await userService.updateMe(apiPayload);
+    // Prefer the newly typed name, fall back to existing name in context
+    const updatedUser = mapBackendUser(updated, displayName || user?.name);
     setUser(updatedUser);
     localStorage.setItem('pricepulse_auth_user', JSON.stringify(updatedUser));
     showToast('Profile and preferences updated!', 'success');
