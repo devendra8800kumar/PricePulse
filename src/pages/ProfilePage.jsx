@@ -51,7 +51,7 @@ export default function ProfilePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Sync state if user updates
+  // Sync form state when user object is updated after a save
   useEffect(() => {
     if (user) {
       setName(user.name || '');
@@ -61,14 +61,20 @@ export default function ProfilePage() {
       setNotifyPush(user.notification_prefs?.push ?? false);
       setNotifyWebhook(user.notification_prefs?.webhook ?? false);
     }
+  }, [user]);
+
+  // Fetch live stats once on mount
+  useEffect(() => {
     refreshUserStats();
-  }, [user, refreshUserStats]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setIsSaving(true);
     try {
       await updateUserProfile({
+        name: name.trim(),
         email: email.trim(),
         locale: locale,
         notification_prefs: {
