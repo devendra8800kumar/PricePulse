@@ -143,7 +143,7 @@ export default function PriceAlertsPage() {
   };
 
   return (
-    <div className="py-8 bg-slate-50 min-h-screen">
+    <div className="py-8 bg-slate-50 dark:bg-[#0b0f19] min-h-screen transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}

@@ -122,7 +122,7 @@ export default function ProductDetailsPage() {
 
   if (isLoading && !product) {
     return (
-      <div className="py-16 bg-slate-50 min-h-screen">
+      <div className="py-16 bg-slate-50 dark:bg-[#0b0f19] min-h-screen transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-6">
             <Link to="/" className="hover:text-blue-600">Home</Link>
@@ -146,7 +146,7 @@ export default function ProductDetailsPage() {
   if (!product) {
     const isUnauthenticated = fetchError && (fetchError.includes('Not authenticated') || fetchError.includes('401'));
     return (
-      <div className="py-16 bg-slate-50 min-h-screen">
+      <div className="py-16 bg-slate-50 dark:bg-[#0b0f19] min-h-screen transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-xs text-slate-500 mb-6">
             <Link to="/" className="hover:text-blue-600">Home</Link>
@@ -305,7 +305,7 @@ export default function ProductDetailsPage() {
   };
 
   return (
-    <div className="py-8 bg-slate-50 min-h-screen">
+    <div className="py-8 bg-slate-50 dark:bg-[#0b0f19] min-h-screen transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumb Navigation */}

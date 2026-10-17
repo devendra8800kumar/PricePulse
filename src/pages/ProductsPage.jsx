@@ -150,7 +150,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="py-8 bg-slate-50 min-h-screen">
+    <div className="py-8 bg-slate-50 dark:bg-[#0b0f19] min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Page Header */}
@@ -160,10 +160,10 @@ export default function ProductsPage() {
               <Sparkles className="w-3.5 h-3.5 text-blue-600" />
               <span>Real-Time Catalog & Live Ingestion</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
               Explore <span className="text-blue-600">Tracked Products</span>
             </h1>
-            <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-2xl">
+            <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
               Audit prices across Amazon India and Flipkart. Submit live URLs to monitor prices prospectively and evaluate buy-timing recommendations.
             </p>
           </div>
@@ -191,17 +191,17 @@ export default function ProductsPage() {
 
         {/* Live Ingestion Banner for Logged-In Shoppers */}
         {user && user.isLoggedIn && (
-          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="mb-6 p-4 rounded-2xl bg-blue-600/10 dark:bg-blue-900/25 border border-blue-300/60 dark:border-blue-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
                 <Layers className="w-5 h-5" />
               </div>
               <div className="text-xs">
-                <span className="font-extrabold text-slate-900 block text-sm">
+                <span className="font-extrabold text-slate-900 dark:text-slate-100 block text-sm">
                   Live FastAPI Ingestion Active ({apiProducts?.length || 0} Products in System)
                 </span>
-                <span className="text-slate-600">
-                  Prospective scraping deduplicates canonical ASIN & PID keys with GBDT inference.
+                <span className="text-slate-600 dark:text-slate-400">
+                  Prospective scraping deduplicates canonical ASIN &amp; PID keys with GBDT inference.
                 </span>
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function ProductsPage() {
               <button
                 onClick={() => fetchApiProducts({ platform: selectedPlatform !== 'all' ? selectedPlatform : null })}
                 disabled={isProductsLoading}
-                className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isProductsLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -219,7 +219,7 @@ export default function ProductsPage() {
         )}
 
         {/* Search, Filter & Sort Control Deck */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs mb-8 space-y-4">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-700/60 rounded-2xl p-4 sm:p-5 shadow-2xs mb-8 space-y-4">
           
           {/* Top Row: Search Input + Sort Dropdown */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -367,10 +367,10 @@ export default function ProductsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto">
+          <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-700/60 p-12 text-center max-w-md mx-auto">
             <Filter className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900 mb-1">No products match your filters</h3>
-            <p className="text-xs text-slate-500 mb-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1">No products match your filters</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
               Try adjusting your store, price range, search query, or category selection.
             </p>
             <button
