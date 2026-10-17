@@ -154,24 +154,35 @@ export default function WatchlistPage() {
             ) : subscriptions.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {subscriptions.map((sub) => {
+                  const subProd = sub.product ? normalizeApiProduct(sub.product) : null;
                   const rawProd = (apiProducts || []).find(p => p.id === sub.product_id);
-                  const matchedProd = rawProd 
-                    ? normalizeApiProduct(rawProd) 
-                    : (TRENDING_PRODUCTS.find(p => p.id === sub.product_id) || TRENDING_PRODUCTS[0]);
-                  const currentPrice = currency === 'USD' ? (matchedProd.currentPriceUSD || 100) : (matchedProd.currentPriceINR || 8000);
+                  const normalizedRaw = rawProd ? normalizeApiProduct(rawProd) : null;
+                  const demoMatch = TRENDING_PRODUCTS.find(p => p.id === sub.product_id);
+
+                  const matchedProd = subProd || normalizedRaw || demoMatch;
+                  const prodName = matchedProd?.name || sub?.product?.title || rawProd?.title || `Tracked Product #${sub.product_id.slice(0, 8)}`;
+                  const prodImage = matchedProd?.image || sub?.product?.image_url || rawProd?.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300';
+                  const prodPlatform = matchedProd?.platform || sub?.product?.platform || rawProd?.platform || 'Amazon';
+                  const prodSlug = matchedProd?.slug || matchedProd?.id || sub.product_id;
+
+                  const currentPrice = currency === 'USD' 
+                    ? (matchedProd?.currentPriceUSD || (matchedProd?.currentPriceINR ? Math.round(matchedProd.currentPriceINR / 83) : 100)) 
+                    : (matchedProd?.currentPriceINR || sub?.product?.last_price || rawProd?.last_price || 8000);
                   const targetVal = sub.target_price ?? 0;
-                  const isReached = currentPrice <= targetVal;
+                  const isReached = currentPrice > 0 && currentPrice <= targetVal;
 
                   return (
                     <div
                       key={sub.id}
-                      className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs flex flex-col justify-between hover:shadow-card-hover transition-all"
+                      className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col justify-between hover:shadow-card-hover transition-all"
                     >
                       <div>
                         {/* Status bar */}
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                            sub.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                            sub.is_active 
+                              ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' 
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                           }`}>
                             {sub.is_active ? 'Active Monitoring' : 'Paused'}
                           </span>
@@ -179,18 +190,18 @@ export default function WatchlistPage() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleToggleSubActive(sub)}
-                              className="p-1 rounded text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+                              className="p-1 rounded text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
                               title={sub.is_active ? 'Pause' : 'Activate'}
                             >
                               {sub.is_active ? (
-                                <ToggleRight className="w-4 h-4 text-emerald-600" />
+                                <ToggleRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                               ) : (
                                 <ToggleLeft className="w-4 h-4 text-slate-400" />
                               )}
                             </button>
                             <button
                               onClick={() => handleDeleteSub(sub.id)}
-                              className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                              className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                               title="Delete subscription"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -201,9 +212,14 @@ export default function WatchlistPage() {
                         {/* Image & Title */}
                         <div className="relative mb-3">
                           <img
-                            src={matchedProd.image || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300'}
-                            alt={matchedProd.name || 'Product'}
-                            className="w-full h-40 rounded-xl object-cover bg-slate-50 border border-slate-200"
+                            src={prodImage}
+                            alt={prodName}
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300';
+                            }}
+                            className="w-full h-40 rounded-xl object-contain bg-slate-50 dark:bg-slate-800 p-2 border border-slate-200 dark:border-slate-700"
                           />
                           {isReached && (
                             <span className="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-600 text-white shadow-xs">
@@ -213,13 +229,16 @@ export default function WatchlistPage() {
                         </div>
 
                         <Link
-                          to={`/products/${matchedProd.slug || matchedProd.id}`}
-                          className="text-base font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1 block mb-0.5"
+                          to={`/products/${prodSlug}`}
+                          className="text-base font-bold text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-1 block mb-0.5"
+                          title={prodName}
                         >
-                          {matchedProd.name || `Product #${sub.product_id.slice(0, 8)}`}
+                          {prodName}
                         </Link>
-                        <p className="text-xs text-slate-500 line-clamp-1 mb-3">
-                          Product ID: <span className="font-mono">{sub.product_id.slice(0, 12)}...</span>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-3 flex items-center gap-1.5">
+                          <span className="capitalize font-semibold">{prodPlatform}</span>
+                          <span>•</span>
+                          <span className="font-mono text-[11px]">{sub?.product?.canonical_key || `ID: ${sub.product_id.slice(0, 10)}...`}</span>
                         </p>
 
                         {/* Price Details */}

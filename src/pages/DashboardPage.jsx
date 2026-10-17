@@ -358,7 +358,7 @@ export default function DashboardPage() {
               ) : (
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {priceAlerts.slice(0, 4).map((alert) => {
-                    const product = getProductById(alert.productId);
+                    const product = resolveProduct(alert.productId);
                     if (!product) return null;
                     const currentPrice = getProductBestPrice(product);
                     const diff = currentPrice - alert.targetPrice;
@@ -370,6 +370,11 @@ export default function DashboardPage() {
                           <img 
                             src={product.image} 
                             alt={product.name} 
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300';
+                            }}
                             className="w-12 h-12 object-contain bg-slate-50 dark:bg-slate-800 rounded-xl p-1 border border-slate-200/80 dark:border-slate-700/60 flex-shrink-0"
                           />
                           <div className="min-w-0">
