@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ArrowRight, 
   Sparkles, 
@@ -14,7 +15,8 @@ import SearchBar from './ui/SearchBar';
 import PriceCard from './ui/PriceCard';
 import PriceChart from './ui/PriceChart';
 
-export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, currency = 'INR' }) {
+export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, onSelectProduct, currency = 'INR' }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('iphone');
 
   const currentDataset = HERO_CHART_SCENARIOS[activeTab];
@@ -90,7 +92,13 @@ export default function Hero({ onExploreClick, onCompareClick, onOpenSearch, cur
           >
             <SearchBar 
               onSubmit={(q) => onOpenSearch(q)}
-              onSelectProduct={(p) => onOpenSearch(p.name)}
+              onSelectProduct={(p) => {
+                if (onSelectProduct) {
+                  onSelectProduct(p);
+                } else {
+                  navigate(`/products/${p.slug || p.id}`);
+                }
+              }}
             />
 
             {/* Quick search suggestions as consistent pill buttons */}
