@@ -88,11 +88,16 @@ export default function ProductQuickViewModal() {
 
         {/* 2-Column: Image and Primary Info */}
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 mb-5 items-start">
-          <div className="sm:col-span-5">
+          <div className="sm:col-span-5 flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
             <img
-              src={product.image}
+              src={product.image || product.image_url || 'https://m.media-amazon.com/images/I/61vJtKbAssL._AC_SL1500_.jpg'}
               alt={product.name}
-              className="w-full h-48 sm:h-52 rounded-xl object-cover bg-slate-50 border border-slate-200 shadow-2xs"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://m.media-amazon.com/images/I/51aXvjzcukL._AC_SL1200_.jpg';
+              }}
+              className="w-full h-48 sm:h-52 object-contain"
             />
           </div>
 

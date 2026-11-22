@@ -1,6 +1,7 @@
 // electronicsData.js
 // Comprehensive Electronics Catalog for PricePulse AI Price Comparison Platform
 // Features live comparisons between Amazon and Flipkart, multi-period price histories, and AI recommendations.
+import { IMPORTED_PRODUCTS } from './importedProductData.js';
 
 export const CATEGORIES = [
   { id: 'all', name: 'All Products' },
@@ -326,7 +327,7 @@ export const TRENDING_PRODUCTS = [
       ]
     },
     specs: 'Dual Processor ANC • 30h Battery Life • Hi-Res LDAC Wireless Audio • Multipoint Bluetooth',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80'
+    image: 'https://m.media-amazon.com/images/I/61vJtKbAssL._AC_SL1500_.jpg'
   },
   {
     id: 'prod-4',
@@ -1140,7 +1141,30 @@ export const getProductById = (identifier) => {
   ) || null;
 };
 
-// Aliases for convenience
-export const ALL_PRODUCTS = TRENDING_PRODUCTS;
+// ─── Merge imported (real JSON) products into the catalog ────────────────────
+// Build a deduplicated master catalog:
+//   imported products first (real data takes priority over demo entries with same id/slug)
+const _importedIds = new Set(IMPORTED_PRODUCTS.map(p => p.id));
+const _importedSlugs = new Set(IMPORTED_PRODUCTS.map(p => p.slug));
+const _dedupedDemo = TRENDING_PRODUCTS.filter(
+  p => !_importedIds.has(p.id) && !_importedSlugs.has(p.slug)
+);
+
+/** Master catalog: imported (real) products first, then curated demo entries. */
+export const ALL_PRODUCTS = [...IMPORTED_PRODUCTS, ..._dedupedDemo];
+
+/**
+ * Extended getProductById: searches ALL_PRODUCTS (imported + demo).
+ * Keeps backward compat — existing callers of getProductById still work.
+ */
+export const getProductByIdExtended = (identifier) => {
+  if (!identifier) return null;
+  const id = String(identifier).trim().toLowerCase();
+  return ALL_PRODUCTS.find(p =>
+    p.id.toLowerCase() === id ||
+    (p.slug && p.slug.toLowerCase() === id) ||
+    p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').includes(id)
+  ) || null;
+};
 
 

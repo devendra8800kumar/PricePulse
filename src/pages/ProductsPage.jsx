@@ -12,7 +12,7 @@ import {
   LogIn
 } from 'lucide-react';
 import ProductFlipCard from '../components/ProductFlipCard';
-import { CATEGORIES, TRENDING_PRODUCTS } from '../data/electronicsData';
+import { CATEGORIES, TRENDING_PRODUCTS, ALL_PRODUCTS } from '../data/electronicsData';
 import { normalizeApiProduct } from '../services/productService';
 import { useApp } from '../context/AppContext';
 
@@ -68,7 +68,7 @@ export default function ProductsPage() {
     const normalizedApi = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
     // Put live API items at the front so users immediately see their tracked items
     const existingIds = new Set(normalizedApi.map(p => p.id));
-    const dedupedDemo = TRENDING_PRODUCTS.filter(p => !existingIds.has(p.id));
+    const dedupedDemo = ALL_PRODUCTS.filter(p => !existingIds.has(p.id));
     return [...normalizedApi, ...dedupedDemo];
   }, [apiProducts]);
 

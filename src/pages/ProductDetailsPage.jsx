@@ -22,7 +22,8 @@ import {
   YAxis, 
   Tooltip 
 } from 'recharts';
-import { getProductById, TRENDING_PRODUCTS } from '../data/electronicsData';
+import { getProductById, TRENDING_PRODUCTS, getProductByIdExtended, ALL_PRODUCTS } from '../data/electronicsData';
+import { getImportedProductById, getImportedStats, getImportedPrices } from '../data/importedProductData';
 import { productService, normalizeApiProduct } from '../services/productService';
 import { useApp } from '../context/AppContext';
 import ProductFlipCard from '../components/ProductFlipCard';
@@ -91,7 +92,12 @@ export default function ProductDetailsPage() {
 
   // Fallback to mock data or context-synced API product
   const matchedFromContext = (apiProducts || []).find(p => p.id === id);
-  const baseDemoProduct = getProductById(id) || (matchedFromContext ? normalizeApiProduct(matchedFromContext) : null);
+  // Check imported (real JSON) data first, then demo catalog
+  const importedProduct = getImportedProductById(id);
+  const baseDemoProduct = importedProduct
+    || getProductByIdExtended(id)
+    || getProductById(id)
+    || (matchedFromContext ? normalizeApiProduct(matchedFromContext) : null);
   const product = apiProductData 
     ? normalizeApiProduct(apiProductData) 
     : baseDemoProduct;
@@ -219,17 +225,21 @@ export default function ProductDetailsPage() {
   const lowestPrice = Math.min(azPrice || Infinity, fkPrice || Infinity);
   const safeLowestPrice = isFinite(lowestPrice) ? lowestPrice : (currency === 'USD' ? (product.currentPriceUSD || 0) : (product.currentPriceINR || 0));
 
-  // Extrema and averages from real API stats if available
-  const floorPrice = apiStats?.all_time_low != null
-    ? (currency === 'USD' ? Math.round(apiStats.all_time_low / 85) : apiStats.all_time_low)
+  // Extrema and averages:
+  // Priority: (1) live backend API stats → (2) imported JSON stats → (3) product fields
+  const importedStats = getImportedStats(product?.id);
+  const effectiveStats = apiStats || importedStats;
+
+  const floorPrice = effectiveStats?.all_time_low != null
+    ? (currency === 'USD' ? Math.round(effectiveStats.all_time_low) : Math.round(effectiveStats.all_time_low * 84))
     : (currency === 'USD' ? product.lowestHistoricalPriceUSD : product.lowestHistoricalPriceINR);
 
-  const avgPrice = apiStats?.avg_30 != null
-    ? (currency === 'USD' ? Math.round(apiStats.avg_30 / 85) : apiStats.avg_30)
+  const avgPrice = effectiveStats?.avg_30 != null
+    ? (currency === 'USD' ? Math.round(effectiveStats.avg_30) : Math.round(effectiveStats.avg_30 * 84))
     : (currency === 'USD' ? product.averageHistoricalPriceUSD : product.averageHistoricalPriceINR);
 
-  const highPrice = apiStats?.all_time_high != null
-    ? (currency === 'USD' ? Math.round(apiStats.all_time_high / 85) : apiStats.all_time_high)
+  const highPrice = effectiveStats?.all_time_high != null
+    ? (currency === 'USD' ? Math.round(effectiveStats.all_time_high) : Math.round(effectiveStats.all_time_high * 84))
     : (currency === 'USD' ? product.highestHistoricalPriceUSD : product.highestHistoricalPriceINR);
 
   const isFkCheaper = fkPrice < azPrice;
@@ -244,17 +254,25 @@ export default function ProductDetailsPage() {
   const recReason = apiRecommendation?.reasoning || product.aiReasoning || product.aiVerdictReason;
   const recPhase = apiRecommendation?.phase || (product.isLiveApi ? 'heuristic' : 'learned');
 
-  // Chart dataset: from live apiPrices.data if available, otherwise synthetic or mock
+  // Chart dataset:
+  // Priority: (1) live backend API → (2) imported JSON prices → (3) historyPeriods field → (4) synthetic fallback
   let chartData = [];
-  if (apiPrices?.data && apiPrices.data.length > 0) {
-    const rawData = apiPrices.data.map(pt => {
+  const importedPrices = !apiPrices ? getImportedPrices(product?.id, timeRange) : null;
+  const effectivePrices = apiPrices || importedPrices;
+
+  if (effectivePrices?.data && effectivePrices.data.length > 0) {
+    const rawData = effectivePrices.data.map(pt => {
       const d = new Date(pt.timestamp);
       const label = `${d.getDate()}/${d.getMonth() + 1}`;
-      const p = currency === 'USD' ? Math.round(pt.price / 85) : pt.price;
+      // If this is imported data, prices are already in USD. Backend API data was in INR (÷85).
+      const isImported = !!importedPrices;
+      const p = currency === 'USD'
+        ? (isImported ? Math.round(pt.price) : Math.round(pt.price / 85))
+        : (isImported ? Math.round(pt.price * 84) : pt.price);
       return {
         label,
         amazon: p,
-        flipkart: Math.round(p * 1.02),
+        flipkart: Math.round(p * 1.015),
       };
     });
 
@@ -270,12 +288,17 @@ export default function ProductDetailsPage() {
       chartData = rawData;
     }
   } else {
+    // historyPeriods: imported product stores real data here already in USD/INR
     const rawChartData = product.historyPeriods?.[timeRange] || product.historyPeriods?.['30d'] || product.historyPeriods?.['6m'] || [];
     if (rawChartData && rawChartData.length > 0) {
       chartData = rawChartData.map(pt => ({
         label: pt.label,
-        amazon: currency === 'USD' ? Math.round(pt.amazon / 100) : pt.amazon,
-        flipkart: currency === 'USD' ? Math.round(pt.flipkart / 100) : pt.flipkart,
+        amazon: currency === 'USD'
+          ? (product.isImportedData ? (pt.amazon || pt.priceUSD) : Math.round(pt.amazon / 100))
+          : (product.isImportedData ? (pt.flipkart || pt.priceINR) : pt.amazon),
+        flipkart: currency === 'USD'
+          ? (product.isImportedData ? (pt.flipkart || Math.round((pt.priceUSD || pt.amazon) * 1.015)) : Math.round(pt.flipkart / 100))
+          : (product.isImportedData ? (pt.flipkart || Math.round((pt.priceINR || pt.amazon) * 1.015)) : pt.flipkart),
       }));
     } else {
       const cur = currency === 'USD' ? product.currentPriceUSD : product.currentPriceINR;
@@ -347,11 +370,17 @@ export default function ProductDetailsPage() {
             
             {/* Left: Product Image & Badges */}
             <div className="lg:col-span-5 flex flex-col items-center">
-              <div className="w-full max-w-sm aspect-square bg-slate-50/80 rounded-2xl p-6 border border-slate-100 flex items-center justify-center relative overflow-hidden group">
+              <div className="w-full max-w-sm aspect-square bg-slate-50/80 dark:bg-slate-800/40 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 flex items-center justify-center relative overflow-hidden group">
                 <img 
-                  src={product.image} 
+                  src={product.image || product.image_url || 'https://m.media-amazon.com/images/I/61vJtKbAssL._AC_SL1500_.jpg'} 
                   alt={product.name}
-                  className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://m.media-amazon.com/images/I/51aXvjzcukL._AC_SL1200_.jpg';
+                  }}
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  loading="eager"
                 />
 
                 <div className="absolute top-3 left-3 flex flex-col gap-1.5">
