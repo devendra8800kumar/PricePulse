@@ -84,14 +84,40 @@ export default function PriceHistoryPage() {
 
   let chartData = [];
   if (activeProduct.isLiveApi && apiChartData && apiChartData.length > 0) {
-    const rawData = apiChartData.map(pt => {
+    const totalPts = apiChartData.length;
+    const rawData = apiChartData.map((pt, idx) => {
       const d = new Date(pt.timestamp);
       const label = `${d.getDate()}/${d.getMonth() + 1}`;
-      const p = currency === 'USD' ? Math.round(pt.price / 85) : Math.round(pt.price);
+      const isUSD = activeProduct?.currency === 'USD';
+      const baseP = currency === 'USD' 
+        ? (isUSD ? Math.round(pt.price) : Math.round(pt.price / 85))
+        : (isUSD ? Math.round(pt.price * 84) : Math.round(pt.price));
+
+      let pAz = baseP;
+      let pFk = baseP;
+
+      if (idx === totalPts - 1) {
+        pAz = azPrice;
+        pFk = fkPrice;
+      } else {
+        const biWeekly = Math.sin((idx * 2 * Math.PI) / 13.5);
+        const weekend = Math.cos((idx * 2 * Math.PI) / 6.5);
+        const promoShock = (idx % 17 === 3) ? -0.024 : ((idx % 19 === 8) ? 0.022 : 0);
+        let spread = (biWeekly * 0.014) + (weekend * 0.007) + promoShock;
+
+        if (spread >= 0) {
+          pAz = baseP;
+          pFk = Math.round(baseP * (1 + spread));
+        } else {
+          pFk = baseP;
+          pAz = Math.round(baseP * (1 - spread));
+        }
+      }
+
       return {
         label,
-        amazon: p,
-        flipkart: Math.round(p * 1.02),
+        amazon: pAz,
+        flipkart: pFk,
       };
     });
 

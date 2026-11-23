@@ -104,17 +104,28 @@ export const productService = {
  */
 export function normalizeApiProduct(p) {
   if (!p) return null;
+  const isUSD = p.currency === 'USD';
   const price = p.last_price || 0;
   const low = p.all_time_low || price;
   const high = p.all_time_high || (price > 0 ? price : 1000);
   const isAmazon = p.platform === 'amazon';
   const isFlipkart = p.platform === 'flipkart';
 
+  const priceINR = isUSD ? Math.round(price * 84) : price;
+  const priceUSD = isUSD ? Math.round(price) : Math.round(price / 85);
+  const lowINR = isUSD ? Math.round(low * 84) : low;
+  const lowUSD = isUSD ? Math.round(low) : Math.round(low / 85);
+  const highINR = isUSD ? Math.round(high * 84) : high;
+  const highUSD = isUSD ? Math.round(high) : Math.round(high / 85);
+  const origINR = highINR > priceINR ? highINR : Math.round(priceINR * 1.15);
+  const origUSD = highUSD > priceUSD ? highUSD : Math.round(priceUSD * 1.15);
+
   return {
     id: p.id,
     canonicalKey: p.canonical_key,
     name: p.title || 'Tracked Product',
     slug: p.id,
+    currency: p.currency || (isUSD ? 'USD' : 'INR'),
     image: p.image_url || 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80',
     category: p.category ? p.category.toLowerCase() : 'tech',
     categoryName: p.category ? p.category.toUpperCase() : (p.platform ? p.platform.toUpperCase() : 'ELECTRONICS'),
@@ -122,30 +133,30 @@ export function normalizeApiProduct(p) {
     url: p.url,
     rating: 4.6,
     reviewCount: 840,
-    currentPriceINR: price,
-    currentPriceUSD: Math.round(price / 85),
-    originalPriceINR: high > price ? high : Math.round(price * 1.15),
-    originalPriceUSD: Math.round((high > price ? high : price * 1.15) / 85),
-    lowestHistoricalPriceINR: low,
-    lowestHistoricalPriceUSD: Math.round(low / 85),
-    averageHistoricalPriceINR: Math.round((low + high) / 2),
-    averageHistoricalPriceUSD: Math.round((low + high) / 170),
-    highestHistoricalPriceINR: high,
-    highestHistoricalPriceUSD: Math.round(high / 85),
-    discountPercent: high > price ? Math.round(((high - price) / high) * 100) : 5,
-    savingsAmountINR: high > price ? high - price : Math.round(price * 0.05),
-    savingsAmountUSD: Math.round((high > price ? high - price : price * 0.05) / 85),
+    currentPriceINR: priceINR,
+    currentPriceUSD: priceUSD,
+    originalPriceINR: origINR,
+    originalPriceUSD: origUSD,
+    lowestHistoricalPriceINR: lowINR,
+    lowestHistoricalPriceUSD: lowUSD,
+    averageHistoricalPriceINR: Math.round((lowINR + highINR) / 2),
+    averageHistoricalPriceUSD: Math.round((lowUSD + highUSD) / 2),
+    highestHistoricalPriceINR: highINR,
+    highestHistoricalPriceUSD: highUSD,
+    discountPercent: origINR > priceINR ? Math.round(((origINR - priceINR) / origINR) * 100) : 5,
+    savingsAmountINR: origINR > priceINR ? origINR - priceINR : Math.round(priceINR * 0.05),
+    savingsAmountUSD: origUSD > priceUSD ? origUSD - priceUSD : Math.round(priceUSD * 0.05),
     recommendation: price <= low ? 'BUY NOW' : 'WAIT',
     aiScore: price <= low ? 94 : 65,
-    aiReasoning: `Historical Floor: ₹${low.toLocaleString()}. Vendor: ${p.platform || 'Store'}. Last checked: ${p.last_observed_at ? new Date(p.last_observed_at).toLocaleTimeString() : 'recently'}.`,
+    aiReasoning: `Historical Floor: ${isUSD ? '$' : '₹'}${low.toLocaleString()}. Vendor: ${p.platform || 'Store'}. Last checked: ${p.last_observed_at ? new Date(p.last_observed_at).toLocaleTimeString() : 'recently'}.`,
     specs: `${p.platform ? p.platform.toUpperCase() : 'Store'} • Key: ${p.canonical_key}`,
     isLiveApi: true,
     retailers: [
       {
         name: isAmazon ? 'Amazon' : (isFlipkart ? 'Flipkart' : 'Amazon'),
         logo: isAmazon ? 'amazon' : 'flipkart',
-        priceINR: price,
-        priceUSD: Math.round(price / 85),
+        priceINR: priceINR,
+        priceUSD: priceUSD,
         inStock: true,
         delivery: 'Free Fast Delivery',
         url: p.url,
@@ -153,8 +164,8 @@ export function normalizeApiProduct(p) {
       {
         name: isAmazon ? 'Flipkart' : 'Amazon',
         logo: isAmazon ? 'flipkart' : 'amazon',
-        priceINR: Math.round(price * 1.02),
-        priceUSD: Math.round((price * 1.02) / 85),
+        priceINR: Math.round(priceINR * 1.02),
+        priceUSD: Math.round(priceUSD * 1.02),
         inStock: true,
         delivery: 'Standard Shipping',
         url: p.url,

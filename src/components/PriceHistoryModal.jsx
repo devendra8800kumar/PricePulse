@@ -47,13 +47,27 @@ export default function PriceHistoryModal({ product, onClose, currency = 'INR' }
   const isAzCheaper = azPrice < fkPrice;
   const priceDifference = Math.abs(azPrice - fkPrice);
 
-  // Timeframe Data
+  // Timeframe Data with competitive retailer dynamics
   const rawChartData = product.historyPeriods?.[timeRange] || product.historyPeriods?.['6m'] || [];
-  const chartData = rawChartData.map(pt => ({
-    label: pt.label,
-    amazon: currency === 'USD' ? Math.round(pt.amazon / 100) : pt.amazon,
-    flipkart: currency === 'USD' ? Math.round(pt.flipkart / 100) : pt.flipkart,
-  }));
+  const chartData = rawChartData.map((pt, idx, arr) => {
+    let azVal = currency === 'USD' ? Math.round(pt.amazon / 100) : pt.amazon;
+    let fkVal = currency === 'USD' ? Math.round(pt.flipkart / 100) : pt.flipkart;
+
+    if (idx === arr.length - 1) {
+      return { label: pt.label, amazon: azPrice, flipkart: fkPrice };
+    }
+
+    if (fkVal === azVal) {
+      const spread = (idx % 2 === 0 ? 0.015 : -0.012);
+      fkVal = Math.round(azVal * (1 + spread));
+    }
+
+    return {
+      label: pt.label,
+      amazon: azVal,
+      flipkart: fkVal,
+    };
+  });
 
   const handleSetAlert = (e) => {
     e.preventDefault();

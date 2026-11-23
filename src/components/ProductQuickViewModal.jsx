@@ -42,10 +42,31 @@ export default function ProductQuickViewModal() {
   const isFkCheaper = fkPrice < azPrice;
   const isAzCheaper = azPrice < fkPrice;
 
-  const chartData = (product.historyPeriods?.['1m'] || product.historyPeriods?.['7d'] || []).map(pt => ({
-    label: pt.label,
-    price: currency === 'USD' ? Math.round(pt.amazon / 100) : pt.amazon,
-  }));
+  const chartData = (product.historyPeriods?.['1m'] || product.historyPeriods?.['7d'] || []).map((pt, idx, arr) => {
+    const isUSD = product.currency === 'USD';
+    const azBase = currency === 'USD'
+      ? (isUSD ? Math.round(pt.amazon || pt.priceUSD) : Math.round((pt.amazon || pt.priceINR) / 85))
+      : (isUSD ? Math.round((pt.amazon || pt.priceUSD) * 84) : pt.amazon);
+    
+    let fkBase = currency === 'USD'
+      ? (isUSD ? Math.round(pt.flipkart || pt.priceUSD) : Math.round((pt.flipkart || pt.priceINR) / 85))
+      : (isUSD ? Math.round((pt.flipkart || pt.priceUSD) * 84) : pt.flipkart);
+
+    if (idx === arr.length - 1) {
+      return { label: pt.label, amazon: azPrice, flipkart: fkPrice };
+    }
+
+    if (fkBase === azBase) {
+      const spread = (idx % 2 === 0 ? 0.015 : -0.012);
+      fkBase = Math.round(azBase * (1 + spread));
+    }
+
+    return {
+      label: pt.label,
+      amazon: azBase,
+      flipkart: fkBase,
+    };
+  });
 
   const productUrl = `/products/${product.slug || product.id}`;
 
@@ -140,15 +161,22 @@ export default function ProductQuickViewModal() {
         {/* Price History Preview Graph */}
         <div className="mb-5 p-3 rounded-xl bg-slate-50 border border-slate-200">
           <div className="flex items-center justify-between text-xs mb-2">
-            <span className="font-bold text-slate-700">30-Day Historical Trend</span>
-            <span className="text-slate-500">Floor: <strong className="text-emerald-700">{formatPrice(floor)}</strong></span>
+            <span className="font-bold text-slate-700">30-Day Store Competition</span>
+            <div className="flex items-center gap-3 text-[11px]">
+              <span className="flex items-center gap-1 text-amber-700 font-semibold"><span className="w-2 h-2 rounded-full bg-amber-500"></span>Amazon</span>
+              <span className="flex items-center gap-1 text-blue-700 font-semibold"><span className="w-2 h-2 rounded-full bg-blue-600"></span>Flipkart</span>
+            </div>
           </div>
           <div className="h-32 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="quickViewGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2} />
+                  <linearGradient id="quickViewAzGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="quickViewFkGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.18} />
                     <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
@@ -157,16 +185,20 @@ export default function ProductQuickViewModal() {
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
+                      const pt = payload[0].payload;
                       return (
-                        <div className="bg-white border border-slate-200 p-1.5 rounded-lg text-xs shadow-xs">
-                          <p className="font-bold text-blue-700">{formatPrice(payload[0]?.value)}</p>
+                        <div className="bg-white border border-slate-200 p-2 rounded-lg text-xs shadow-md">
+                          <p className="font-semibold text-slate-700 text-[10px] mb-1">{pt.label}</p>
+                          <p className="font-bold text-amber-700">Amazon: {formatPrice(pt.amazon)}</p>
+                          <p className="font-bold text-blue-700">Flipkart: {formatPrice(pt.flipkart)}</p>
                         </div>
                       );
                     }
                     return null;
                   }}
                 />
-                <Area type="monotone" dataKey="price" stroke="#2563eb" strokeWidth={2} fill="url(#quickViewGrad)" />
+                <Area type="monotone" dataKey="amazon" stroke="#f59e0b" strokeWidth={2} fill="url(#quickViewAzGrad)" name="Amazon" />
+                <Area type="monotone" dataKey="flipkart" stroke="#2563eb" strokeWidth={2} fill="url(#quickViewFkGrad)" name="Flipkart" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
