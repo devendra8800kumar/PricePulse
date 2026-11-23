@@ -18,17 +18,35 @@ import AmazonFlipkartCompare from '../components/AmazonFlipkartCompare';
 import HowItWorks from '../components/HowItWorks';
 import AiSection from '../components/AiSection';
 import { CATEGORIES, TRENDING_PRODUCTS } from '../data/electronicsData';
+import { dedupeAndMergeProducts } from '../services/productService';
 import { useApp } from '../context/AppContext';
 
 export default function HomePage() {
-  const { openSearch, currency, formatPrice } = useApp();
+  const { openSearch, currency, formatPrice, apiProducts, deletedProductIds } = useApp();
   const navigate = useNavigate();
 
+  // Merge live API products with curated trending items with deduplication across stores
+  const trendingList = React.useMemo(() => {
+    const dedupedApi = dedupeAndMergeProducts(apiProducts, deletedProductIds);
+    const apiIds = new Set(dedupedApi.map(p => p.id));
+    const dedupedDemo = TRENDING_PRODUCTS.filter(p => !apiIds.has(p.id));
+    const merged = [...dedupedApi, ...dedupedDemo];
+    if (deletedProductIds && deletedProductIds.length > 0) {
+      const delSet = new Set(deletedProductIds);
+      return merged.filter(p => !delSet.has(p.id) && !delSet.has(p.slug) && !delSet.has(p.canonicalKey));
+    }
+    return merged;
+  }, [apiProducts, deletedProductIds]);
+
   // Top price drop deals (high discounts)
-  const topDeals = TRENDING_PRODUCTS.filter(p => p.discountPercent >= 15).slice(0, 3);
+  const topDeals = React.useMemo(() => {
+    return trendingList.filter(p => p.discountPercent >= 10).slice(0, 3);
+  }, [trendingList]);
 
   // Buy Now recommended products
-  const buyNowProducts = TRENDING_PRODUCTS.filter(p => p.recommendation === 'BUY NOW').slice(0, 3);
+  const buyNowProducts = React.useMemo(() => {
+    return trendingList.filter(p => p.recommendation === 'BUY NOW').slice(0, 3);
+  }, [trendingList]);
 
   return (
     <div className="space-y-0">
@@ -116,7 +134,7 @@ export default function HomePage() {
 
           {/* Product Cards Grid with 3D Flip Card Component */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {TRENDING_PRODUCTS.slice(0, 6).map((product) => (
+            {trendingList.slice(0, 6).map((product) => (
               <ProductFlipCard key={product.id} product={product} />
             ))}
           </div>
@@ -126,7 +144,7 @@ export default function HomePage() {
               to="/products"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-colors"
             >
-              <span>Browse All {TRENDING_PRODUCTS.length} Electronics</span>
+              <span>Browse All {trendingList.length} Electronics</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

@@ -8,7 +8,9 @@ import {
   RotateCw, 
   Eye, 
   Sparkles,
-  X
+  X,
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -45,18 +47,20 @@ export default function ProductFlipCard({ product }) {
     toggleWatchlist, 
     isInCompare, 
     toggleCompare, 
-    setQuickViewProduct 
+    setQuickViewProduct,
+    deleteProduct 
   } = useApp();
 
   const watchlisted = isWatchlisted(product.id);
   const compared = isInCompare(product.id);
 
   const retailers = product.retailers || [];
-  const az = retailers.find(r => r.name?.toLowerCase().includes('amazon')) || retailers[0] || { 
+  const az = product.amazon || retailers.find(r => r.name?.toLowerCase().includes('amazon')) || retailers[0] || { 
     priceUSD: product.currentPriceUSD || 100, 
-    priceINR: product.currentPriceINR || 8000 
+    priceINR: product.currentPriceINR || 8000,
+    inStock: true
   };
-  const fk = retailers.find(r => r.name?.toLowerCase().includes('flipkart')) || retailers[1] || retailers[0] || az;
+  const fk = product.flipkart || retailers.find(r => r.name?.toLowerCase().includes('flipkart')) || retailers[1] || retailers[0] || az;
 
   const azPrice = currency === 'USD' ? (az.priceUSD || 100) : (az.priceINR || 8000);
   const fkPrice = currency === 'USD' ? (fk.priceUSD || 100) : (fk.priceINR || 8000);
@@ -130,15 +134,21 @@ export default function ProductFlipCard({ product }) {
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                product.recommendation === 'BUY NOW'
-                  ? 'badge-buy'
-                  : product.recommendation === 'WAIT'
-                  ? 'badge-wait'
-                  : 'badge-deal'
-              }`}>
-                {product.recommendation || 'BUY NOW'}
-              </span>
+              {(!product.isAvailable || (az.inStock === false && fk.inStock === false)) ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                  Out of Stock
+                </span>
+              ) : (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                  product.recommendation === 'BUY NOW'
+                    ? 'badge-buy'
+                    : product.recommendation === 'WAIT'
+                    ? 'badge-wait'
+                    : 'badge-deal'
+                }`}>
+                  {product.recommendation || 'BUY NOW'}
+                </span>
+              )}
 
               {/* Watchlist Toggle */}
               <button
@@ -156,6 +166,22 @@ export default function ProductFlipCard({ product }) {
                 aria-label="Toggle Watchlist"
               >
                 {watchlisted ? <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> : <Bookmark className="w-3.5 h-3.5" />}
+              </button>
+
+              {/* Destroy / Delete Product from Explore */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Permanently destroy "${product.name}"? This removes it from Explore and stops all tracking.`)) {
+                    deleteProduct(product.id);
+                  }
+                }}
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-200 dark:hover:border-rose-900/50 transition-colors cursor-pointer"
+                title="Destroy / Delete from Explore"
+                aria-label="Destroy Product"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
 
               {/* Flip Trigger Button */}
@@ -381,28 +407,62 @@ export default function ProductFlipCard({ product }) {
             {product.name}
           </h4>
 
-          {/* Amazon vs Flipkart Breakdown */}
-          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-1 mb-2 shrink-0">
+          {/* Amazon vs Flipkart Breakdown with Direct Links */}
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-1.5 mb-2 shrink-0">
             <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-amber-800 dark:text-amber-400 font-bold flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                Amazon:
-              </span>
-              <span className="font-extrabold text-slate-900 dark:text-white">
-                {formatPrice(azPrice)}
-                {isAzCheaper && <span className="ml-1 text-[9px] px-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 uppercase font-bold">Cheapest</span>}
-              </span>
+                <span className="text-amber-800 dark:text-amber-400 font-bold">Amazon:</span>
+                {az.inStock === false && (
+                  <span className="text-[9px] px-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-bold">OOS</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-slate-900 dark:text-white">
+                  {azPrice > 0 ? formatPrice(azPrice) : '—'}
+                  {isAzCheaper && <span className="ml-1 text-[9px] px-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 uppercase font-bold">Cheapest</span>}
+                </span>
+                {(az.url || az.fallbackUrl) && (
+                  <a
+                    href={az.url || az.fallbackUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-0.5 rounded text-slate-400 hover:text-amber-600 transition-colors"
+                    title="Open Amazon Listing"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-blue-800 dark:text-blue-400 font-bold flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0"></span>
-                Flipkart:
-              </span>
-              <span className="font-extrabold text-slate-900 dark:text-white">
-                {formatPrice(fkPrice)}
-                {isFkCheaper && <span className="ml-1 text-[9px] px-1 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 uppercase font-bold">Cheapest</span>}
-              </span>
+                <span className="text-blue-800 dark:text-blue-400 font-bold">Flipkart:</span>
+                {fk.inStock === false && (
+                  <span className="text-[9px] px-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-bold">OOS</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-slate-900 dark:text-white">
+                  {fkPrice > 0 ? formatPrice(fkPrice) : '—'}
+                  {isFkCheaper && <span className="ml-1 text-[9px] px-1 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 uppercase font-bold">Cheapest</span>}
+                </span>
+                {(fk.url || fk.fallbackUrl) && (
+                  <a
+                    href={fk.url || fk.fallbackUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-0.5 rounded text-slate-400 hover:text-blue-600 transition-colors"
+                    title="Open Flipkart Listing"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
             </div>
 
             <div className="pt-1 border-t border-slate-200/80 dark:border-slate-700 flex items-center justify-between text-[11px]">
@@ -470,6 +530,22 @@ export default function ProductFlipCard({ product }) {
               className="py-2 px-3 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
             >
               Back
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm(`Permanently destroy "${product.name}"? This removes it from Explore and stops all tracking.`)) {
+                  deleteProduct(product.id);
+                }
+              }}
+              className="py-2 px-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/50 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+              title="Destroy / Delete from Explore"
+              aria-label="Destroy Product"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Destroy</span>
             </button>
           </div>
 

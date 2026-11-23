@@ -61,18 +61,22 @@ export default function SearchBar({
         });
 
         if (res && Array.isArray(res.results)) {
-          const mapped = res.results.map((item) => ({
-            id: item.id,
-            name: item.title,
-            title: item.title,
-            platform: item.platform,
-            canonicalKey: item.canonical_key,
-            image: item.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300',
-            currentPriceINR: item.last_price || 0,
-            currentPriceUSD: Math.round((item.last_price || 0) / 83),
-            slug: item.id,
-            isLiveApi: true,
-          }));
+          const mapped = res.results.map((item) => {
+            const isItemUSD = item.currency === 'USD';
+            const price = item.last_price || 0;
+            return {
+              id: item.id,
+              name: item.title,
+              title: item.title,
+              platform: item.platform,
+              canonicalKey: item.canonical_key,
+              image: item.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300',
+              currentPriceINR: isItemUSD ? Math.round(price * 84) : Math.round(price),
+              currentPriceUSD: isItemUSD ? Math.round(price) : Math.round(price / 85),
+              slug: item.id,
+              isLiveApi: true,
+            };
+          });
           setLiveApiResults(mapped);
         } else {
           setLiveApiResults([]);
@@ -103,18 +107,22 @@ export default function SearchBar({
         const url = (p.url || '').toLowerCase();
         return title.includes(q) || key.includes(q) || plat.includes(q) || url.includes(q);
       })
-      .map((p) => ({
-        id: p.id,
-        name: p.title || p.name,
-        title: p.title || p.name,
-        platform: p.platform,
-        canonicalKey: p.canonical_key,
-        image: p.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300',
-        currentPriceINR: p.last_price || 0,
-        currentPriceUSD: Math.round((p.last_price || 0) / 83),
-        slug: p.id,
-        isLiveApi: true,
-      }));
+      .map((p) => {
+        const isPUSD = p.currency === 'USD';
+        const price = p.last_price || 0;
+        return {
+          id: p.id,
+          name: p.title || p.name,
+          title: p.title || p.name,
+          platform: p.platform,
+          canonicalKey: p.canonical_key,
+          image: p.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300',
+          currentPriceINR: isPUSD ? Math.round(price * 84) : Math.round(price),
+          currentPriceUSD: isPUSD ? Math.round(price) : Math.round(price / 85),
+          slug: p.id,
+          isLiveApi: true,
+        };
+      });
   }, [query, apiProducts]);
 
   // Combine live API results and context live products without duplicates

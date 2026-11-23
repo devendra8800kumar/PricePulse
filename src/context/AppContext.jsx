@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { formatCurrency } from '../data/electronicsData';
 import { authService } from '../services/authService.js';
 import { userService } from '../services/userService.js';
-import { productService } from '../services/productService.js';
+import { productService, normalizeApiProduct } from '../services/productService.js';
 import { subscriptionService } from '../services/subscriptionService.js';
 import { alertService } from '../services/alertService.js';
 import { searchService } from '../services/searchService.js';
@@ -85,6 +85,20 @@ export function AppProvider({ children }) {
       return ['prod-1', 'prod-3'];
     }
   });
+
+  // Permanently deleted products (from Explore / Watchlist)
+  const [deletedProductIds, setDeletedProductIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pricepulse_deleted_products');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('pricepulse_deleted_products', JSON.stringify(deletedProductIds));
+  }, [deletedProductIds]);
 
   useEffect(() => {
     localStorage.setItem('pricepulse_watchlist', JSON.stringify(watchlist));
@@ -212,7 +226,14 @@ export function AppProvider({ children }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // 6. Live Tracked Products from Backend API (/api/v1/products)
-  const [apiProducts, setApiProducts] = useState([]);
+  const [apiProducts, setApiProducts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pricepulse_api_products');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [apiProductsTotal, setApiProductsTotal] = useState(0);
   const [isProductsLoading, setIsProductsLoading] = useState(false);
 
@@ -261,6 +282,11 @@ export function AppProvider({ children }) {
       if (res && res.items) {
         setApiProducts(res.items);
         setApiProductsTotal(res.total || res.items.length);
+        try {
+          localStorage.setItem('pricepulse_api_products', JSON.stringify(res.items));
+        } catch {
+          // ignore
+        }
         return res;
       }
     } catch (err) {
@@ -501,11 +527,70 @@ export function AppProvider({ children }) {
   };
 
   const deleteSubscription = async (id) => {
-    await subscriptionService.deleteSubscription(id);
-    showToast('Subscription removed', 'info');
+    try {
+      await subscriptionService.deleteSubscription(id);
+    } catch (err) {
+      console.warn('Backend delete subscription error:', err.message);
+    }
+    setSubscriptions(prev => prev.filter(s => s.id !== id));
+    showToast('Subscription permanently removed', 'info');
     await fetchSubscriptions();
     await refreshUserStats();
   };
+
+  // Permanently delete/destroy a product (and any merged counterpart) from catalog, subscriptions, and explore
+  const deleteProduct = useCallback(async (productId, explicitCounterpartId = null) => {
+    try {
+      const targetIds = [productId];
+      if (explicitCounterpartId) {
+        targetIds.push(explicitCounterpartId);
+      } else {
+        const prod = apiProducts.find(p => p.id === productId || p.canonical_key === productId);
+        if (prod) {
+          const norm = normalizeApiProduct(prod, apiProducts);
+          if (norm?.counterpartId) {
+            targetIds.push(norm.counterpartId);
+          }
+        }
+      }
+
+      for (const id of targetIds) {
+        try {
+          await productService.deleteProduct(id);
+        } catch (err) {
+          console.warn('Backend deleteProduct error or local product:', err.message);
+        }
+      }
+
+      const idSet = new Set(targetIds);
+
+      // Add to deleted set so it stays hidden
+      setDeletedProductIds(prev => {
+        const next = [...prev];
+        for (const id of targetIds) {
+          if (!next.includes(id)) next.push(id);
+        }
+        return next;
+      });
+
+      // Remove from live API products state
+      setApiProducts(prev => prev.filter(p => !idSet.has(p.id) && !idSet.has(p.canonical_key)));
+
+      // Remove from watchlist
+      setWatchlist(prev => prev.filter(id => !idSet.has(id)));
+
+      // Remove from compare
+      setCompareList(prev => prev.filter(id => !idSet.has(id)));
+
+      // Remove any subscriptions for this product
+      setSubscriptions(prev => prev.filter(s => !idSet.has(s.product_id)));
+
+      showToast('Product successfully deleted and removed from catalog', 'info');
+      await refreshUserStats();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete product', 'error');
+    }
+  }, [apiProducts, showToast, refreshUserStats]);
 
   // Alert management (/api/v1/alerts)
   const markAlertAsRead = async (id) => {
@@ -665,6 +750,8 @@ export function AppProvider({ children }) {
     isProductsLoading,
     fetchApiProducts,
     trackProduct,
+    deleteProduct,
+    deletedProductIds,
     isTrackModalOpen,
     openTrackModal,
     closeTrackModal,

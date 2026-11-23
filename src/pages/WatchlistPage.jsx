@@ -12,7 +12,7 @@ import {
   ToggleRight
 } from 'lucide-react';
 import { TRENDING_PRODUCTS } from '../data/electronicsData';
-import { normalizeApiProduct } from '../services/productService';
+import { normalizeApiProduct, dedupeAndMergeProducts } from '../services/productService';
 import { useApp } from '../context/AppContext';
 
 export default function WatchlistPage() {
@@ -25,6 +25,8 @@ export default function WatchlistPage() {
     fetchSubscriptions,
     updateSubscription,
     deleteSubscription,
+    deleteProduct,
+    deletedProductIds,
     apiProducts,
     formatPrice, 
     currency, 
@@ -34,11 +36,16 @@ export default function WatchlistPage() {
   } = useApp();
 
   const allKnownProducts = React.useMemo(() => {
-    const normalizedApi = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
-    const apiIds = new Set(normalizedApi.map(p => p.id));
+    const dedupedApi = dedupeAndMergeProducts(apiProducts, deletedProductIds);
+    const apiIds = new Set(dedupedApi.map(p => p.id));
     const dedupedDemo = TRENDING_PRODUCTS.filter(p => !apiIds.has(p.id));
-    return [...normalizedApi, ...dedupedDemo];
-  }, [apiProducts]);
+    const combined = [...dedupedApi, ...dedupedDemo];
+    if (deletedProductIds && deletedProductIds.length > 0) {
+      const delSet = new Set(deletedProductIds);
+      return combined.filter(p => !delSet.has(p.id) && !delSet.has(p.slug) && !delSet.has(p.canonicalKey));
+    }
+    return combined;
+  }, [apiProducts, deletedProductIds]);
 
   const watchlistedProducts = React.useMemo(() => {
     return (watchlist || [])
@@ -58,13 +65,22 @@ export default function WatchlistPage() {
     }
   };
 
-  const handleDeleteSub = async (subId) => {
-    if (window.confirm('Stop monitoring this item?')) {
+  const handleDeleteSub = async (subId, productId = null) => {
+    if (window.confirm('Permanently remove this tracked product from your watchlist and cloud tracking?')) {
       try {
         await deleteSubscription(subId);
+        if (productId && watchlist.includes(productId)) {
+          toggleWatchlist(productId);
+        }
       } catch (err) {
         showToast(err.message || 'Failed to delete subscription', 'error');
       }
+    }
+  };
+
+  const handleRemoveBookmark = (productId) => {
+    if (window.confirm('Remove this product from your watchlist?')) {
+      toggleWatchlist(productId);
     }
   };
 
@@ -154,9 +170,9 @@ export default function WatchlistPage() {
             ) : subscriptions.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {subscriptions.map((sub) => {
-                  const subProd = sub.product ? normalizeApiProduct(sub.product) : null;
+                  const subProd = sub.product ? normalizeApiProduct(sub.product, apiProducts) : null;
                   const rawProd = (apiProducts || []).find(p => p.id === sub.product_id);
-                  const normalizedRaw = rawProd ? normalizeApiProduct(rawProd) : null;
+                  const normalizedRaw = rawProd ? normalizeApiProduct(rawProd, apiProducts) : null;
                   const demoMatch = TRENDING_PRODUCTS.find(p => p.id === sub.product_id);
 
                   const matchedProd = subProd || normalizedRaw || demoMatch;
@@ -200,7 +216,7 @@ export default function WatchlistPage() {
                               )}
                             </button>
                             <button
-                              onClick={() => handleDeleteSub(sub.id)}
+                              onClick={() => handleDeleteSub(sub.id, sub.product_id)}
                               className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                               title="Delete subscription"
                             >
@@ -328,7 +344,7 @@ export default function WatchlistPage() {
                           </span>
 
                           <button
-                            onClick={() => toggleWatchlist(product.id)}
+                            onClick={() => handleRemoveBookmark(product.id)}
                             className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                             title="Remove from watchlist"
                           >

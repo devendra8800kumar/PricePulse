@@ -207,61 +207,70 @@ export default function SearchModal({
                 <span className="text-[10px] text-slate-400 font-semibold">Indexed in DB</span>
               </div>
               <div className="space-y-1.5">
-                {liveResults.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      onSelectProduct({
-                        id: item.id,
-                        name: item.title,
-                        categoryName: item.platform ? item.platform.toUpperCase() : 'Electronics',
-                        image: item.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300',
-                        currentPriceINR: item.last_price || 0,
-                        currentPriceUSD: Math.round((item.last_price || 0) / 83),
-                        slug: item.id,
-                      });
-                      onClose();
-                    }}
-                    className="flex items-center justify-between p-3 rounded-xl bg-blue-50/40 hover:bg-blue-50 border border-blue-100 hover:border-blue-300 cursor-pointer transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={item.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300'}
-                        alt={item.title}
-                        className="w-11 h-11 rounded-lg object-cover bg-white border border-slate-200 shrink-0"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300';
-                        }}
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
-                            {item.title}
+                {liveResults.map((item) => {
+                  const isItemUSD = item.currency === 'USD';
+                  const price = item.last_price || 0;
+                  const priceINR = isItemUSD ? Math.round(price * 84) : Math.round(price);
+                  const priceUSD = isItemUSD ? Math.round(price) : Math.round(price / 85);
+                  const activeCurrency = currency || 'INR';
+                  const displayVal = activeCurrency === 'USD' ? priceUSD : priceINR;
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        onSelectProduct({
+                          id: item.id,
+                          name: item.title,
+                          categoryName: item.platform ? item.platform.toUpperCase() : 'Electronics',
+                          image: item.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300',
+                          currentPriceINR: priceINR,
+                          currentPriceUSD: priceUSD,
+                          slug: item.id,
+                        });
+                        onClose();
+                      }}
+                      className="flex items-center justify-between p-3 rounded-xl bg-blue-50/40 hover:bg-blue-50 border border-blue-100 hover:border-blue-300 cursor-pointer transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={item.image_url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300'}
+                          alt={item.title}
+                          className="w-11 h-11 rounded-lg object-cover bg-white border border-slate-200 shrink-0"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300';
+                          }}
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                              {item.title}
+                            </span>
+                            <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded uppercase shrink-0">
+                              {item.platform || 'Store'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                            Canonical Key: <span className="text-slate-700 font-semibold">{item.canonical_key || item.id}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0 ml-2">
+                        <div className="text-right">
+                          <span className="text-sm font-black text-slate-900 block font-mono">
+                            {formatCurrency(displayVal, activeCurrency)}
                           </span>
-                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded uppercase shrink-0">
-                            {item.platform || 'Store'}
+                          <span className="text-[10px] font-bold text-emerald-700">
+                            Live Scraped
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                          Canonical Key: <span className="text-slate-700 font-semibold">{item.canonical_key || item.id}</span>
-                        </p>
+                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-3 shrink-0 ml-2">
-                      <div className="text-right">
-                        <span className="text-sm font-black text-slate-900 block font-mono">
-                          {formatCurrency(item.last_price || 0, 'INR')}
-                        </span>
-                        <span className="text-[10px] font-bold text-emerald-700">
-                          Live Indexed
-                        </span>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

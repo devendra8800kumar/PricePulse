@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import ProductFlipCard from '../components/ProductFlipCard';
 import { CATEGORIES, TRENDING_PRODUCTS, ALL_PRODUCTS } from '../data/electronicsData';
-import { normalizeApiProduct } from '../services/productService';
+import { normalizeApiProduct, dedupeAndMergeProducts } from '../services/productService';
 import { useApp } from '../context/AppContext';
 
 export default function ProductsPage() {
@@ -25,7 +25,8 @@ export default function ProductsPage() {
     apiProducts, 
     fetchApiProducts, 
     isProductsLoading, 
-    openTrackModal 
+    openTrackModal,
+    deletedProductIds 
   } = useApp();
 
   // URL search query & category syncing
@@ -63,14 +64,19 @@ export default function ProductsPage() {
     if (plat) setSelectedPlatform(plat);
   }, [searchParams]);
 
-  // Merge Live API Products with Curated Demo Catalog
+  // Merge Live API Products with Curated Demo Catalog (deduplicated across platforms)
   const combinedCatalog = useMemo(() => {
-    const normalizedApi = (apiProducts || []).map(normalizeApiProduct).filter(Boolean);
+    const dedupedApi = dedupeAndMergeProducts(apiProducts, deletedProductIds);
     // Put live API items at the front so users immediately see their tracked items
-    const existingIds = new Set(normalizedApi.map(p => p.id));
+    const existingIds = new Set(dedupedApi.map(p => p.id));
     const dedupedDemo = ALL_PRODUCTS.filter(p => !existingIds.has(p.id));
-    return [...normalizedApi, ...dedupedDemo];
-  }, [apiProducts]);
+    const merged = [...dedupedApi, ...dedupedDemo];
+    if (deletedProductIds && deletedProductIds.length > 0) {
+      const deletedSet = new Set(deletedProductIds);
+      return merged.filter(p => !deletedSet.has(p.id) && !deletedSet.has(p.slug) && !deletedSet.has(p.canonicalKey));
+    }
+    return merged;
+  }, [apiProducts, deletedProductIds]);
 
   // Filtered and Sorted Products
   const filteredProducts = useMemo(() => {

@@ -402,6 +402,7 @@ export const RAW_OBSERVATIONS = [
   { observed_at: '2026-11-20T12:00:00Z', price: 383.59, availability: true },
   { observed_at: '2026-11-21T12:00:00Z', price: 376.64, availability: true },
   { observed_at: '2026-11-22T12:00:00Z', price: 382.52, availability: true },
+  { observed_at: '2026-11-23T12:39:05Z', price: 229.67, availability: true },
 ];
 
 // ─── Derived statistics (computed once from RAW_OBSERVATIONS) ────────────────

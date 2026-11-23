@@ -29,8 +29,8 @@ export default function ProductQuickViewModal() {
   const product = quickViewProduct;
   const watchlisted = isWatchlisted(product.id);
 
-  const az = product.retailers.find(r => r.name.toLowerCase().includes('amazon')) || product.retailers[0];
-  const fk = product.retailers.find(r => r.name.toLowerCase().includes('flipkart')) || product.retailers[1] || product.retailers[0];
+  const az = product.amazon || product.retailers?.find(r => r.name?.toLowerCase().includes('amazon')) || product.retailers?.[0] || { priceINR: 0, priceUSD: 0, inStock: true };
+  const fk = product.flipkart || product.retailers?.find(r => r.name?.toLowerCase().includes('flipkart')) || product.retailers?.[1] || az;
 
   const azPrice = currency === 'USD' ? az.priceUSD : az.priceINR;
   const fkPrice = currency === 'USD' ? fk.priceUSD : fk.priceINR;
@@ -144,15 +144,54 @@ export default function ProductQuickViewModal() {
               </div>
             </div>
 
-            {/* Store Comparison Matrix */}
+            {/* Store Comparison Matrix with Direct Platform Links & Stock Status */}
             <div className="space-y-1.5 text-xs font-mono">
               <div className="flex justify-between items-center p-2 rounded-lg bg-amber-50/60 border border-amber-200">
-                <span className="text-amber-900 font-bold">Amazon India:</span>
-                <span className="font-extrabold text-slate-900">{formatPrice(azPrice)}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span className="text-amber-900 font-bold">Amazon:</span>
+                  {az.inStock === false && (
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-amber-100 text-amber-800 font-sans font-bold">Out of Stock</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-slate-900">{azPrice > 0 ? formatPrice(azPrice) : '—'}</span>
+                  {(az.url || az.fallbackUrl) && (
+                    <a
+                      href={az.url || az.fallbackUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 rounded text-slate-400 hover:text-amber-700 transition-colors"
+                      title="Open Amazon Listing"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
               </div>
+
               <div className="flex justify-between items-center p-2 rounded-lg bg-blue-50/60 border border-blue-200">
-                <span className="text-blue-900 font-bold">Flipkart:</span>
-                <span className="font-extrabold text-slate-900">{formatPrice(fkPrice)}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                  <span className="text-blue-900 font-bold">Flipkart:</span>
+                  {fk.inStock === false && (
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-amber-100 text-amber-800 font-sans font-bold">Out of Stock</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-slate-900">{fkPrice > 0 ? formatPrice(fkPrice) : '—'}</span>
+                  {(fk.url || fk.fallbackUrl) && (
+                    <a
+                      href={fk.url || fk.fallbackUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 rounded text-slate-400 hover:text-blue-700 transition-colors"
+                      title="Open Flipkart Listing"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>
